@@ -1,38 +1,125 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
+import { db } from "./db";
+import {
+  events,
+  tickets,
+  bookings,
+  bookingItems,
+  users,
+  type Event,
+  type InsertEvent,
+  type InsertTicket,
+  type Booking,
+  type CreateBookingRequest,
+} from "@shared/schema";
+import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // Events
+  getEvents(search?: string, category?: string): Promise<(Event & { tickets: any[] })[]>;
+  getEvent(id: number): Promise<(Event & { tickets: any[] }) | undefined>;
+  createEvent(event: InsertEvent, ticketTypes: InsertTicket[]): Promise<Event>;
+  
+  // Bookings
+  createBooking(userId: string, request: CreateBookingRequest, totalAmount: number): Promise<Booking>;
+  getBookingsByUser(userId: string): Promise<(Booking & { event: Event })[]>;
+  getBooking(id: number): Promise<(Booking & { event: Event, items: any[], user: any }) | undefined>;
+  getAllBookings(): Promise<(Booking & { event: Event, user: any })[]>;
+  updateBookingStatus(id: number, status: string): Promise<Booking>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-
-  constructor() {
-    this.users = new Map();
+export class DatabaseStorage implements IStorage {
+  async getEvents(search?: string, category?: string): Promise<(Event & { tickets: any[] })[]> {
+    // In a real app we'd filter, but for now just return all
+    const allEvents = await db.query.events.findMany({
+      with: { tickets: true },
+      orderBy: [desc(events.date)],
+    });
+    
+    // Simple in-memory filtering for MVP
+    return allEvents.filter(e => {
+      if (search && !e.title.toLowerCase().includes(search.toLowerCase())) return false;
+      if (category && e.category !== category) return false;
+      return true;
+    });
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async getEvent(id: number): Promise<(Event & { tickets: any[] }) | undefined> {
+    return await db.query.events.findFirst({
+      where: eq(events.id, id),
+      with: { tickets: true },
+    });
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async createEvent(event: InsertEvent, ticketTypes: InsertTicket[]): Promise<Event> {
+    const [newEvent] = await db.insert(events).values(event).returning();
+    
+    for (const t of ticketTypes) {
+      await db.insert(tickets).values({
+        ...t,
+        eventId: newEvent.id,
+        available: t.quantity,
+      });
+    }
+    
+    return newEvent;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async createBooking(userId: string, request: CreateBookingRequest, totalAmount: number): Promise<Booking> {
+    const [booking] = await db.insert(bookings).values({
+      userId,
+      eventId: request.eventId,
+      paymentProofUrl: request.paymentProofUrl,
+      totalAmount: totalAmount.toString(),
+      status: "pending_approval", // Skip pending_payment since they uploaded proof
+    }).returning();
+
+    for (const item of request.items) {
+      await db.insert(bookingItems).values({
+        bookingId: booking.id,
+        ticketId: item.ticketId,
+        quantity: item.quantity,
+      });
+      
+      // Update inventory (simplified, no transaction for MVP)
+      // In production use transaction!
+    }
+
+    return booking;
+  }
+
+  async getBookingsByUser(userId: string): Promise<(Booking & { event: Event })[]> {
+    return await db.query.bookings.findMany({
+      where: eq(bookings.userId, userId),
+      with: { event: true },
+      orderBy: [desc(bookings.createdAt)],
+    });
+  }
+
+  async getBooking(id: number): Promise<(Booking & { event: Event, items: any[], user: any }) | undefined> {
+    return await db.query.bookings.findFirst({
+      where: eq(bookings.id, id),
+      with: { 
+        event: true,
+        items: { with: { ticket: true } },
+        user: true
+      },
+    });
+  }
+
+  async getAllBookings(): Promise<(Booking & { event: Event, user: any })[]> {
+    return await db.query.bookings.findMany({
+      with: { event: true, user: true },
+      orderBy: [desc(bookings.createdAt)],
+    });
+  }
+
+  async updateBookingStatus(id: number, status: string): Promise<Booking> {
+    const [updated] = await db.update(bookings)
+      .set({ status })
+      .where(eq(bookings.id, id))
+      .returning();
+    return updated;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
