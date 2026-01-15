@@ -28,12 +28,19 @@ const CATEGORIES = [
 ];
 
 export default function CreateEvent() {
-  const { isAuthenticated } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
   const createEvent = useCreateEvent();
   
-  if (!isAuthenticated) {
+  if (authLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
+
+  if (!user) {
     window.location.href = "/api/login";
+    return null;
+  }
+
+  if (!user.isAdmin) {
+    setLocation("/");
     return null;
   }
 

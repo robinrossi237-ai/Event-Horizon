@@ -1,6 +1,9 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+import { users } from "@shared/schema";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
@@ -31,6 +34,12 @@ export async function registerRoutes(
 
   app.post(api.events.create.path, isAuthenticated, async (req, res) => {
     try {
+      const userId = (req.user as any).claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Only admins can create events" });
+      }
+
       const bodySchema = api.events.create.input.extend({
         date: z.coerce.date(),
       });
@@ -88,6 +97,11 @@ export async function registerRoutes(
   // In production, add isAdmin middleware.
   
   app.get("/api/admin/bookings", isAuthenticated, async (req, res) => {
+     const userId = (req.user as any).claims.sub;
+     const user = await storage.getUser(userId);
+     if (!user?.isAdmin) {
+       return res.status(403).json({ message: "Admin access required" });
+     }
      // Return all bookings for admin
      const bookings = await storage.getAllBookings();
      res.json(bookings);
@@ -111,6 +125,15 @@ export async function registerRoutes(
 
 async function seed() {
   const existing = await storage.getEvents();
+  
+  // Make the first logged-in user an admin if they exist
+  // This is a helper for the user to get admin access easily in the demo
+  const allUsers = await db.select().from(users);
+  if (allUsers.length > 0 && !allUsers[0].isAdmin) {
+    await db.update(users).set({ isAdmin: true }).where(eq(users.id, allUsers[0].id));
+    console.log(`User ${allUsers[0].email} promoted to admin for demo.`);
+  }
+
   if (existing.length === 0) {
     // Create a dummy user ID for seeding (since we don't have a real user yet)
     // In reality, events should be created by real users.
