@@ -8,8 +8,8 @@ import { QRCodeSVG } from "qrcode.react"; // Need to add this package if not pre
 
 // Placeholder for QR code if package not available in env
 const QRCode = ({ value }: { value: string }) => (
-  <div className="w-32 h-32 bg-white p-2">
-    <QRCodeSVG value={value} size={128} />
+  <div className="w-48 h-48 bg-white p-2 flex items-center justify-center mx-auto">
+    <QRCodeSVG value={value} size={180} />
   </div>
 );
 
@@ -80,19 +80,21 @@ export default function TicketView() {
           </div>
 
           <div className="p-8 pt-0 text-center">
-            <div className="flex justify-center mb-6">
-              <div className="bg-white p-2 rounded-xl shadow-inner border">
+            <div className="flex flex-col items-center justify-center mb-6">
+              <div className="bg-white p-4 rounded-2xl shadow-inner border border-gray-100">
                 <QRCode value={`booking:${booking.id}`} />
               </div>
             </div>
             
-            <p className="text-sm font-mono text-gray-500 mb-2">Booking ID: #{booking.id}</p>
-            <p className="text-xs text-gray-400">Show this QR code at the entrance</p>
+            <div className="bg-gray-100 py-3 px-6 rounded-xl inline-block mb-4 border border-gray-200">
+              <p className="text-lg font-mono font-bold text-black">TICKET ID: #{booking.id}</p>
+            </div>
+            <p className="text-xs text-gray-400">Show this QR code at the entrance for validation</p>
           </div>
 
           <div className="bg-gray-50 p-4 text-center border-t border-gray-100">
-            <Button className="w-full bg-black text-white hover:bg-gray-800" onClick={() => window.print()}>
-              <Download className="w-4 h-4 mr-2" /> Save Ticket
+            <Button className="w-full bg-black text-white hover:bg-gray-800 h-12 text-base font-bold" onClick={() => window.print()}>
+              <Download className="w-5 h-5 mr-2" /> Download Ticket
             </Button>
           </div>
         </div>
