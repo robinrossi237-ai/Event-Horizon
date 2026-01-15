@@ -14,6 +14,18 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const CATEGORIES = [
+  "Music",
+  "Technology",
+  "Arts",
+  "Sports",
+  "Food",
+  "Networking",
+  "Workshop",
+  "Other"
+];
 
 export default function CreateEvent() {
   const { isAuthenticated } = useAuth();
@@ -129,13 +141,20 @@ export default function CreateEvent() {
 
                 <div className="space-y-2">
                   <Label htmlFor="category">Category</Label>
-                  <Input 
-                    id="category" 
-                    placeholder="e.g. Music, Tech, Art" 
-                    value={formData.category}
-                    onChange={e => setFormData({...formData, category: e.target.value})}
+                  <Select 
+                    value={formData.category} 
+                    onValueChange={value => setFormData({...formData, category: value})}
                     required
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -168,17 +187,25 @@ export default function CreateEvent() {
 
               <div className="space-y-2">
                 <Label>Event Cover Image</Label>
-                {imageUrl ? (
-                  <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-border group">
-                    <img src={imageUrl} alt="Cover" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Button variant="destructive" size="sm" onClick={() => setImageUrl("")}>Remove Image</Button>
+                <div className="border-2 border-dashed border-border rounded-xl p-6 text-center hover:bg-secondary/10 transition-colors">
+                  {imageUrl ? (
+                    <div className="space-y-4">
+                      <div className="relative aspect-video w-full max-w-md mx-auto rounded-lg overflow-hidden border border-border group">
+                        <img src={imageUrl} alt="Cover Preview" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Button type="button" variant="destructive" size="sm" onClick={() => setImageUrl("")}>Remove Image</Button>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Image selected successfully</p>
                     </div>
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed border-border rounded-xl p-10 text-center hover:bg-secondary/10 transition-colors">
-                    <ImageIcon className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-sm text-muted-foreground mb-4">Upload a high quality image for your event page.</p>
+                  ) : (
+                    <>
+                      <ImageIcon className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-sm text-muted-foreground mb-4">Upload a high quality image for your event page.</p>
+                    </>
+                  )}
+                  
+                  {!imageUrl && (
                     <ObjectUploader
                       onGetUploadParameters={async (file) => {
                         const res = await fetch("/api/uploads/request-url", {
@@ -199,6 +226,8 @@ export default function CreateEvent() {
                       }}
                       onComplete={(result) => {
                         if (result.successful && result.successful.length > 0) {
+                          // The uploadURL returned here is actually the public URL for viewing
+                          // in this integration context.
                           setImageUrl(result.successful[0].uploadURL);
                         }
                       }}
@@ -206,8 +235,8 @@ export default function CreateEvent() {
                     >
                       Choose Image
                     </ObjectUploader>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
