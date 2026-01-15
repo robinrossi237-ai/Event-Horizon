@@ -31,7 +31,10 @@ export async function registerRoutes(
 
   app.post(api.events.create.path, isAuthenticated, async (req, res) => {
     try {
-      const input = api.events.create.input.parse(req.body);
+      const bodySchema = api.events.create.input.extend({
+        date: z.coerce.date(),
+      });
+      const input = bodySchema.parse(req.body);
       // Ensure organizerId is set to current user
       const eventData = { ...input, organizerId: (req.user as any).claims.sub };
       const event = await storage.createEvent(eventData, input.tickets);
