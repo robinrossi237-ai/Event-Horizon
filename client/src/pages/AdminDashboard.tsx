@@ -70,8 +70,11 @@ export default function AdminDashboard() {
   }
 
   // Filter only pending bookings for action
+  const [historySearch, setHistorySearch] = useState("");
+  
   const pendingBookings = bookings?.filter(b => b.status === "pending_approval") || [];
-  const processedBookings = bookings?.filter(b => b.status === "approved" || b.status === "rejected") || [];
+  const processedBookings = (bookings?.filter(b => b.status === "approved" || b.status === "rejected") || [])
+    .filter(b => b.event?.title.toLowerCase().includes(historySearch.toLowerCase()));
   
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -197,8 +200,17 @@ export default function AdminDashboard() {
 
           <TabsContent value="history">
             <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-border">
+              <div className="p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h2 className="text-xl font-bold">Processed Bookings</h2>
+                <div className="relative w-full sm:w-64">
+                  <Input
+                    placeholder="Filter by event name..."
+                    value={historySearch}
+                    onChange={(e) => setHistorySearch(e.target.value)}
+                    className="pl-9 h-9"
+                  />
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                </div>
               </div>
               <div className="overflow-x-auto">
                 <Table>
