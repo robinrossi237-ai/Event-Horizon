@@ -36,42 +36,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AdminDashboard() {
+  const [historySearch, setHistorySearch] = useState("");
   const { user, isLoading: authLoading } = useAuth();
   const { data: bookings, isLoading: bookingsLoading } = useBookings();
-  const approveMutation = useApproveBooking();
-  const rejectMutation = useRejectBooking();
-
-  const { data: adminUsers, isLoading: usersLoading } = useQuery<any[]>({
-    queryKey: ["/api/admin/users"],
-    enabled: !!user?.isAdmin,
-  });
-
-  const { data: adminEvents, isLoading: eventsLoading } = useQuery<any[]>({
-    queryKey: ["/api/admin/events"],
-    enabled: !!user?.isAdmin,
-  });
-
-  if (authLoading || bookingsLoading || usersLoading || eventsLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-10 h-10 text-primary animate-spin" />
-      </div>
-    );
-  }
-
-  if (!user?.isAdmin) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-10 text-center">
-        <XCircle className="w-16 h-16 text-destructive mb-4" />
-        <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-        <p className="text-muted-foreground">You do not have administrative privileges to access this page.</p>
-        <Button className="mt-6" onClick={() => window.location.href = "/"}>Return Home</Button>
-      </div>
-    );
-  }
-
-  // Filter only pending bookings for action
-  const [historySearch, setHistorySearch] = useState("");
   
   const pendingBookings = bookings?.filter(b => b.status === "pending_approval") || [];
   const processedBookings = (bookings?.filter(b => b.status === "approved" || b.status === "rejected") || [])
