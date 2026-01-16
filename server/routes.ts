@@ -143,9 +143,12 @@ async function seed() {
   // Make the first logged-in user an admin if they exist
   // This is a helper for the user to get admin access easily in the demo
   const allUsers = await db.select().from(users);
-  if (allUsers.length > 0 && !allUsers[0].isAdmin) {
-    await db.update(users).set({ isAdmin: true }).where(eq(users.id, allUsers[0].id));
-    console.log(`User ${allUsers[0].email} promoted to admin for demo.`);
+  if (allUsers.length > 0) {
+    const firstUser = allUsers[0] as any;
+    if (!firstUser.isAdmin) {
+      await db.update(users).set({ isAdmin: true } as any).where(eq(users.id, firstUser.id));
+      console.log(`User ${firstUser.email} promoted to admin for demo.`);
+    }
   }
 
   if (existing.length === 0) {
@@ -171,29 +174,27 @@ async function seed() {
     await storage.createEvent({
       title: "Summer Music Festival",
       description: "The biggest music festival of the year featuring top artists.",
-      date: new Date("2025-07-15T18:00:00Z"),
+      date: new Date("2025-07-15T18:00:00Z") as any,
       location: "Central Park, NY",
       category: "Music",
       imageUrl: "https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
       organizerId: "seed-organizer",
-      isPromoted: true,
     }, [
-      { name: "General Admission", price: "50", quantity: 1000 },
-      { name: "VIP", price: "150", quantity: 200 }
+      { name: "General Admission", price: "50", quantity: 1000, eventId: 0 },
+      { name: "VIP", price: "150", quantity: 200, eventId: 0 }
     ]);
     
      await storage.createEvent({
       title: "Tech Conference 2025",
       description: "Future of AI and Web Development.",
-      date: new Date("2025-09-20T09:00:00Z"),
+      date: new Date("2025-09-20T09:00:00Z") as any,
       location: "Convention Center, SF",
       category: "Technology",
       imageUrl: "https://images.unsplash.com/photo-1544531586-fde5298cdd40?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
       organizerId: "seed-organizer",
-      isPromoted: false,
     }, [
-      { name: "Early Bird", price: "299", quantity: 500 },
-      { name: "Standard", price: "499", quantity: 1000 }
+      { name: "Early Bird", price: "299", quantity: 500, eventId: 0 },
+      { name: "Standard", price: "499", quantity: 1000, eventId: 0 }
     ]);
   }
 }
