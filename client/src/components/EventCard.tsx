@@ -11,7 +11,7 @@ interface EventCardProps {
 export function EventCard({ event }: EventCardProps) {
   // Find lowest price
   const minPrice = Math.min(...event.tickets.map((t) => Number(t.price)));
-  const formattedPrice = minPrice === 0 ? "Free" : `$${minPrice}`;
+  const formattedPrice = minPrice === 0 ? "Free" : `${minPrice.toLocaleString()} Fcfa`;
 
   return (
     <Link

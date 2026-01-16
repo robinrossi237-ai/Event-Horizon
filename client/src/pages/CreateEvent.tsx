@@ -266,14 +266,14 @@ export default function CreateEvent() {
                     />
                   </div>
                   <div className="w-32 space-y-2">
-                    <Label>Price ($)</Label>
+                    <Label>Price (Fcfa)</Label>
                     <Input 
                       type="number"
                       value={ticket.price}
                       onChange={e => updateTicket(index, "price", e.target.value)}
-                      placeholder="0.00"
+                      placeholder="0"
                       min="0"
-                      step="0.01"
+                      step="1"
                       required
                     />
                   </div>

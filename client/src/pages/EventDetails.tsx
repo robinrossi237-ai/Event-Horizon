@@ -129,7 +129,7 @@ export default function EventDetails() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-lg text-primary">${Number(ticket.price).toFixed(2)}</p>
+                        <p className="font-bold text-lg text-primary">{Number(ticket.price).toLocaleString()} Fcfa</p>
                       </div>
                     </div>
                   ))}

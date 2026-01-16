@@ -134,10 +134,8 @@ export default function AdminDashboard() {
                         <TableRow key={booking.id}>
                           <TableCell className="font-mono text-xs">#{booking.id}</TableCell>
                           <TableCell className="font-medium">{booking.event?.title || "Unknown Event"}</TableCell>
-                          <TableCell className="text-muted-foreground font-mono text-xs">
-                            {booking.user?.email || booking.userId}
-                          </TableCell>
-                          <TableCell>${Number(booking.totalAmount).toFixed(2)}</TableCell>
+                          <TableCell>{booking.user?.email || booking.userId}</TableCell>
+                          <TableCell>{Number(booking.totalAmount).toLocaleString()} Fcfa</TableCell>
                           <TableCell>{booking.createdAt ? format(new Date(booking.createdAt), "MMM d, HH:mm") : "N/A"}</TableCell>
                           <TableCell>
                             <Dialog>
@@ -226,10 +224,8 @@ export default function AdminDashboard() {
                         <TableRow key={booking.id}>
                           <TableCell className="font-mono text-xs">#{booking.id}</TableCell>
                           <TableCell className="font-medium">{booking.event?.title || "Unknown Event"}</TableCell>
-                          <TableCell className="text-muted-foreground font-mono text-xs">
-                            {booking.user?.email || booking.userId}
-                          </TableCell>
-                          <TableCell>${Number(booking.totalAmount).toFixed(2)}</TableCell>
+                          <TableCell>{booking.user?.email || booking.userId}</TableCell>
+                          <TableCell>{Number(booking.totalAmount).toLocaleString()} Fcfa</TableCell>
                           <TableCell>
                             <Badge variant={booking.status === "approved" ? "default" : "destructive"} className={booking.status === "approved" ? "bg-green-100 text-green-700 border-green-200" : ""}>
                               {booking.status}

@@ -87,7 +87,7 @@ export function BookingModal({ event, open, onOpenChange }: BookingModalProps) {
                   <div>
                     <p className="font-medium">{ticket.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      ${Number(ticket.price).toFixed(2)} • {ticket.available} left
+                      {Number(ticket.price).toLocaleString()} Fcfa • {ticket.available} left
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -116,7 +116,7 @@ export function BookingModal({ event, open, onOpenChange }: BookingModalProps) {
             </div>
             <div className="flex justify-between items-center pt-2 border-t">
               <span className="font-semibold">Total Amount</span>
-              <span className="text-xl font-bold text-primary">${totalAmount.toFixed(2)}</span>
+              <span className="text-xl font-bold text-primary">{totalAmount.toLocaleString()} Fcfa</span>
             </div>
           </div>
 
