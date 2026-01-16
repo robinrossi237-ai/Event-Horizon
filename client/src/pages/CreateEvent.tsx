@@ -32,18 +32,6 @@ export default function CreateEvent() {
   const [, setLocation] = useLocation();
   const createEvent = useCreateEvent();
   
-  if (authLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
-
-  if (!user) {
-    window.location.href = "/api/login";
-    return null;
-  }
-
-  if (!user.isAdmin) {
-    setLocation("/");
-    return null;
-  }
-
   const [date, setDate] = useState<Date>();
   const [imageUrl, setImageUrl] = useState<string>("");
   
@@ -58,6 +46,18 @@ export default function CreateEvent() {
   const [tickets, setTickets] = useState([
     { name: "General Admission", price: "0", quantity: "100" }
   ]);
+
+  if (authLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
+
+  if (!user) {
+    window.location.href = "/api/login";
+    return null;
+  }
+
+  if (!user.isAdmin) {
+    setLocation("/");
+    return null;
+  }
 
   const addTicket = () => {
     setTickets([...tickets, { name: "", price: "0", quantity: "0" }]);
