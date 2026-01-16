@@ -35,9 +35,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function AdminDashboard() {
-  const [historySearch, setHistorySearch] = useState("");
+  const [historySearch, setHistorySearch] = useState("all");
   const { user, isLoading: authLoading } = useAuth();
   const { data: bookings, isLoading: bookingsLoading } = useBookings();
   const approveMutation = useApproveBooking();
@@ -74,7 +75,7 @@ export default function AdminDashboard() {
 
   const pendingBookings = bookings?.filter(b => b.status === "pending_approval") || [];
   const processedBookings = (bookings?.filter(b => b.status === "approved" || b.status === "rejected") || [])
-    .filter(b => b.event?.title.toLowerCase().includes(historySearch.toLowerCase()));
+    .filter(b => historySearch === "all" || b.eventId === Number(historySearch));
   
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -202,14 +203,20 @@ export default function AdminDashboard() {
             <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
               <div className="p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h2 className="text-xl font-bold">Processed Bookings</h2>
-                <div className="relative w-full sm:w-64">
-                  <Input
-                    placeholder="Filter by event name..."
-                    value={historySearch}
-                    onChange={(e) => setHistorySearch(e.target.value)}
-                    className="pl-9 h-9"
-                  />
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <div className="w-full sm:w-64">
+                  <Select value={historySearch} onValueChange={setHistorySearch}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Filter by event" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Events</SelectItem>
+                      {adminEvents?.map((event) => (
+                        <SelectItem key={event.id} value={event.id.toString()}>
+                          {event.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="overflow-x-auto">
