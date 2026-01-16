@@ -155,9 +155,12 @@ export function BookingModal({ event, open, onOpenChange }: BookingModalProps) {
                         setPaymentProofUrl(result.successful[0].uploadURL);
                       }
                     }}
-                    buttonClassName="bg-primary hover:bg-primary/90 text-white"
+                    buttonClassName="bg-primary hover:bg-primary/90 text-white w-full"
                   >
-                    Upload Receipt
+                    <div className="flex items-center justify-center gap-2">
+                      <UploadCloud className="w-4 h-4" />
+                      Upload Receipt
+                    </div>
                   </ObjectUploader>
               </div>
             ) : (

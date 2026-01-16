@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { ReactNode } from "react";
 import Uppy from "@uppy/core";
 import type { UppyFile, UploadResult } from "@uppy/core";
-import DashboardModal from "@uppy/react/dashboard-modal";
 import "@uppy/core/css/style.min.css";
 import "@uppy/dashboard/css/style.min.css";
 import AwsS3 from "@uppy/aws-s3";
@@ -31,33 +30,15 @@ interface ObjectUploaderProps {
 }
 
 /**
- * A file upload component that renders as a button and provides a modal interface for
- * file management.
+ * A file upload component that renders as a button and triggers the file manager directly.
  *
  * Features:
- * - Renders as a customizable button that opens a file upload modal
- * - Provides a modal interface for:
- *   - File selection
- *   - File preview
- *   - Upload progress tracking
- *   - Upload status display
+ * - Renders as a customizable button that opens the system file picker
+ * - Handles file upload progress automatically
  *
  * The component uses Uppy v5 under the hood to handle all file upload functionality.
- * All file management features are automatically handled by the Uppy dashboard modal.
  *
  * @param props - Component props
- * @param props.maxNumberOfFiles - Maximum number of files allowed to be uploaded
- *   (default: 1)
- * @param props.maxFileSize - Maximum file size in bytes (default: 10MB)
- * @param props.onGetUploadParameters - Function to get upload parameters for each file.
- *   Receives the UppyFile object with file.name, file.size, file.type properties.
- *   Use these to request per-file presigned URLs from your backend. Returns method,
- *   url, and optional headers for the upload request.
- * @param props.onComplete - Callback function called when upload is complete. Typically
- *   used to make post-upload API calls to update server state and set object ACL
- *   policies.
- * @param props.buttonClassName - Optional CSS class name for the button
- * @param props.children - Content to be rendered inside the button
  */
 export function ObjectUploader({
   maxNumberOfFiles = 1,
@@ -67,14 +48,14 @@ export function ObjectUploader({
   buttonClassName,
   children,
 }: ObjectUploaderProps) {
-  const [showModal, setShowModal] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [uppy] = useState(() =>
     new Uppy({
       restrictions: {
         maxNumberOfFiles,
         maxFileSize,
       },
-      autoProceed: false,
+      autoProceed: true,
     })
       .use(AwsS3, {
         shouldUseMultipart: false,
@@ -82,21 +63,44 @@ export function ObjectUploader({
       })
       .on("complete", (result) => {
         onComplete?.(result);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
       })
   );
 
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    files.forEach((file) => {
+      try {
+        uppy.addFile({
+          source: "file input",
+          name: file.name,
+          type: file.type,
+          data: file,
+        });
+      } catch (err) {
+        console.error("Failed to add file to uppy:", err);
+      }
+    });
+  };
+
   return (
     <div>
-      <Button onClick={() => setShowModal(true)} className={buttonClassName}>
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        style={{ display: "none" }}
+        multiple={maxNumberOfFiles > 1}
+      />
+      <Button onClick={handleClick} className={buttonClassName}>
         {children}
       </Button>
-
-      <DashboardModal
-        uppy={uppy}
-        open={showModal}
-        onRequestClose={() => setShowModal(false)}
-        proudlyDisplayPoweredByUppy={false}
-      />
     </div>
   );
 }

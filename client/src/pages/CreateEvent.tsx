@@ -238,9 +238,12 @@ export default function CreateEvent() {
                           setImageUrl(result.successful[0].uploadURL);
                         }
                       }}
-                      buttonClassName="bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                      buttonClassName="bg-secondary text-secondary-foreground hover:bg-secondary/80 w-full"
                     >
-                      Choose Image
+                      <div className="flex items-center justify-center gap-2">
+                        <ImageIcon className="w-4 h-4" />
+                        Choose Image
+                      </div>
                     </ObjectUploader>
                   )}
                 </div>
