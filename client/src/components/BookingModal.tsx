@@ -152,7 +152,9 @@ export function BookingModal({ event, open, onOpenChange }: BookingModalProps) {
                     }}
                     onComplete={(result) => {
                       if (result.successful && result.successful.length > 0) {
-                        setPaymentProofUrl(result.successful[0].uploadURL ?? null);
+                        const upload = result.successful[0];
+                        const publicUrl = (upload.response?.body as any)?.publicUrl || upload.uploadURL.split("?")[0];
+                        setPaymentProofUrl(publicUrl as string);
                       }
                     }}
                     buttonClassName="bg-primary hover:bg-primary/90 text-white w-full"

@@ -233,9 +233,9 @@ export default function CreateEvent() {
                       }}
                       onComplete={(result) => {
                         if (result.successful && result.successful.length > 0) {
-                          // The uploadURL returned here is actually the public URL for viewing
-                          // in this integration context.
-                          setImageUrl(result.successful[0].uploadURL ?? "");
+                          const upload = result.successful[0];
+                          const publicUrl = (upload.response?.body as any)?.publicUrl || upload.uploadURL.split("?")[0];
+                          setImageUrl(publicUrl as string);
                         }
                       }}
                       buttonClassName="bg-secondary text-secondary-foreground hover:bg-secondary/80 w-full"
