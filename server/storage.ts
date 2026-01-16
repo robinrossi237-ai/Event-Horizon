@@ -26,9 +26,16 @@ export interface IStorage {
   getAllBookings(): Promise<(Booking & { event: Event, user: any })[]>;
   updateBookingStatus(id: number, status: string): Promise<Booking>;
   getAllUsers(): Promise<any[]>;
+  getUser(id: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
+  async getUser(id: string): Promise<any> {
+    return await db.query.users.findFirst({
+      where: eq(users.id, id),
+    });
+  }
+
   async getEvents(search?: string, category?: string): Promise<(Event & { tickets: any[] })[]> {
     // In a real app we'd filter, but for now just return all
     const allEvents = await db.query.events.findMany({

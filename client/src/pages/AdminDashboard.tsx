@@ -130,15 +130,15 @@ export default function AdminDashboard() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      pendingBookings.map((booking) => (
+                      pendingBookings.map((booking: any) => (
                         <TableRow key={booking.id}>
                           <TableCell className="font-mono text-xs">#{booking.id}</TableCell>
-                          <TableCell className="font-medium">{booking.event.title}</TableCell>
+                          <TableCell className="font-medium">{booking.event?.title || "Unknown Event"}</TableCell>
                           <TableCell className="text-muted-foreground font-mono text-xs">
                             {booking.user?.email || booking.userId}
                           </TableCell>
                           <TableCell>${Number(booking.totalAmount).toFixed(2)}</TableCell>
-                          <TableCell>{format(new Date(booking.createdAt!), "MMM d, HH:mm")}</TableCell>
+                          <TableCell>{booking.createdAt ? format(new Date(booking.createdAt), "MMM d, HH:mm") : "N/A"}</TableCell>
                           <TableCell>
                             <Dialog>
                               <DialogTrigger asChild>
@@ -222,10 +222,10 @@ export default function AdminDashboard() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      processedBookings.map((booking) => (
+                      processedBookings.map((booking: any) => (
                         <TableRow key={booking.id}>
                           <TableCell className="font-mono text-xs">#{booking.id}</TableCell>
-                          <TableCell className="font-medium">{booking.event.title}</TableCell>
+                          <TableCell className="font-medium">{booking.event?.title || "Unknown Event"}</TableCell>
                           <TableCell className="text-muted-foreground font-mono text-xs">
                             {booking.user?.email || booking.userId}
                           </TableCell>
@@ -235,7 +235,7 @@ export default function AdminDashboard() {
                               {booking.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>{format(new Date(booking.createdAt!), "MMM d, HH:mm")}</TableCell>
+                          <TableCell>{booking.createdAt ? format(new Date(booking.createdAt), "MMM d, HH:mm") : "N/A"}</TableCell>
                         </TableRow>
                       ))
                     )}
