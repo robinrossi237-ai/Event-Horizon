@@ -80,7 +80,7 @@ export default function CreateEvent() {
     try {
       await createEvent.mutateAsync({
         ...formData,
-        date: date.toISOString(),
+        date: date.toISOString() as any,
         imageUrl,
         tickets: tickets.map(t => ({
           name: t.name,
@@ -235,7 +235,7 @@ export default function CreateEvent() {
                         if (result.successful && result.successful.length > 0) {
                           // The uploadURL returned here is actually the public URL for viewing
                           // in this integration context.
-                          setImageUrl(result.successful[0].uploadURL);
+                          setImageUrl(result.successful[0].uploadURL ?? "");
                         }
                       }}
                       buttonClassName="bg-secondary text-secondary-foreground hover:bg-secondary/80 w-full"

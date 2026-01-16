@@ -116,6 +116,18 @@ export async function registerRoutes(
     const booking = await storage.updateBookingStatus(Number(req.params.id), "rejected");
     res.json(booking);
   });
+
+  app.get("/api/admin/users", isAuthenticated, async (req, res) => {
+    if (!req.user?.isAdmin) return res.status(401).json({ message: "Unauthorized" });
+    const allUsers = await storage.getAllUsers();
+    res.json(allUsers);
+  });
+
+  app.get("/api/admin/events", isAuthenticated, async (req, res) => {
+    if (!req.user?.isAdmin) return res.status(401).json({ message: "Unauthorized" });
+    const allEvents = await storage.getEvents();
+    res.json(allEvents);
+  });
   
   // Seed data
   await seed();

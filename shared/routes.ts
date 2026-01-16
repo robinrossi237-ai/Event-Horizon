@@ -96,6 +96,24 @@ export const api = {
       },
     },
   },
+  admin: {
+    users: {
+      method: 'GET' as const,
+      path: '/api/admin/users',
+      responses: {
+        200: z.array(z.any()),
+        401: errorSchemas.unauthorized,
+      },
+    },
+    events: {
+      method: 'GET' as const,
+      path: '/api/admin/events',
+      responses: {
+        200: z.array(z.any()),
+        401: errorSchemas.unauthorized,
+      },
+    },
+  },
 };
 
 export function buildUrl(path: string, params?: Record<string, string | number>): string {

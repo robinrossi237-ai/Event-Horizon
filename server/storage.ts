@@ -25,6 +25,7 @@ export interface IStorage {
   getBooking(id: number): Promise<(Booking & { event: Event, items: any[], user: any }) | undefined>;
   getAllBookings(): Promise<(Booking & { event: Event, user: any })[]>;
   updateBookingStatus(id: number, status: string): Promise<Booking>;
+  getAllUsers(): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -119,6 +120,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(bookings.id, id))
       .returning();
     return updated;
+  }
+
+  async getAllUsers(): Promise<any[]> {
+    return await db.select().from(users).orderBy(desc(users.id));
   }
 }
 
