@@ -164,17 +164,17 @@ export function BookingModal({ event, open, onOpenChange }: BookingModalProps) {
                   </ObjectUploader>
               </div>
             ) : (
-              <div className="flex items-center gap-3 p-4 bg-green-50 text-green-700 rounded-lg border border-green-200">
-                <CheckCircle2 className="w-5 h-5" />
-                <span className="font-medium">Proof uploaded successfully!</span>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="ml-auto text-green-700 hover:text-green-800 hover:bg-green-100"
-                  onClick={() => setPaymentProofUrl(null)}
-                >
-                  Change
-                </Button>
+              <div className="space-y-4">
+                <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-border group">
+                  <img src={paymentProofUrl} alt="Payment Proof Preview" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Button type="button" variant="destructive" size="sm" onClick={() => setPaymentProofUrl(null)}>Remove Proof</Button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-4 bg-green-50 text-green-700 rounded-lg border border-green-200">
+                  <CheckCircle2 className="w-5 h-5" />
+                  <span className="font-medium">Proof uploaded successfully!</span>
+                </div>
               </div>
             )}
           </div>
