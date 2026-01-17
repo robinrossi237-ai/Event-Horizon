@@ -32,6 +32,14 @@ export function Navbar() {
           <span className="font-display font-bold text-xl tracking-tight">TicketMaster</span>
         </Link>
 
+        <div className="flex-1 flex items-center justify-center px-4">
+          <Link href="/catalogue">
+            <Button variant="ghost" className="text-muted-foreground hover:text-primary">
+              Catalogue
+            </Button>
+          </Link>
+        </div>
+
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <>
