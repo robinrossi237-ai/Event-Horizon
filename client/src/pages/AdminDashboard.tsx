@@ -39,6 +39,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export default function AdminDashboard() {
   const [historySearch, setHistorySearch] = useState("all");
+  const [eventCategoryFilter, setEventCategoryFilter] = useState("all");
   const { user, isLoading: authLoading } = useAuth();
   const { data: bookings, isLoading: bookingsLoading } = useBookings();
   const approveMutation = useApproveBooking();
@@ -80,6 +81,13 @@ export default function AdminDashboard() {
   const pendingBookings = bookings?.filter(b => b.status === "pending_approval") || [];
   const processedBookings = (bookings?.filter(b => b.status === "approved" || b.status === "rejected") || [])
     .filter(b => historySearch === "all" || b.eventId === Number(historySearch));
+
+  const filteredAdminEvents = adminEvents?.filter(e => 
+    eventCategoryFilter === "all" || e.category === eventCategoryFilter
+  ) || [];
+
+  const categories = ["Music", "Technology", "Sports", "Arts", "Business", "Food", "Workshop", "Networking"];
+
   
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -300,14 +308,28 @@ export default function AdminDashboard() {
 
           <TabsContent value="events">
             <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-border flex justify-between items-center">
+              <div className="p-6 border-b border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h2 className="text-xl font-bold">All Events</h2>
-                <Button onClick={() => window.location.href = "/create-event"}>Create New</Button>
+                <div className="flex items-center gap-4 w-full sm:w-auto">
+                  <Select value={eventCategoryFilter} onValueChange={setEventCategoryFilter}>
+                    <SelectTrigger className="h-9 w-[180px]">
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categories.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={() => window.location.href = "/create-event"}>Create New</Button>
+                </div>
               </div>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[100px]">Image</TableHead>
                       <TableHead>Title</TableHead>
                       <TableHead>Category</TableHead>
                       <TableHead>Date</TableHead>
@@ -315,8 +337,13 @@ export default function AdminDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {adminEvents?.map((e) => (
+                    {filteredAdminEvents?.map((e) => (
                       <TableRow key={e.id}>
+                        <TableCell>
+                          <div className="w-16 h-12 rounded-md overflow-hidden bg-muted">
+                            <img src={e.imageUrl} alt={e.title} className="w-full h-full object-cover" />
+                          </div>
+                        </TableCell>
                         <TableCell className="font-medium">{e.title}</TableCell>
                         <TableCell><Badge variant="outline">{e.category}</Badge></TableCell>
                         <TableCell>{format(new Date(e.date), "MMM d, yyyy")}</TableCell>
