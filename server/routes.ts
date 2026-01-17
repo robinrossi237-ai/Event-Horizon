@@ -118,17 +118,31 @@ export async function registerRoutes(
   });
 
   app.get("/api/admin/users", isAuthenticated, async (req, res) => {
-    const user = req.user as any;
-    if (!user?.isAdmin) return res.status(401).json({ message: "Unauthorized" });
-    const allUsers = await storage.getAllUsers();
-    res.json(allUsers);
+    try {
+      const sub = (req.user as any).claims.sub;
+      const user = await storage.getUser(sub);
+      console.log(`[admin] User ${user?.email} requesting admin users. isAdmin: ${user?.isAdmin}`);
+      if (!user?.isAdmin) return res.status(403).json({ message: "Unauthorized" });
+      const allUsers = await storage.getAllUsers();
+      res.json(allUsers);
+    } catch (error) {
+      console.error("[admin] Error fetching users:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
   });
 
   app.get("/api/admin/events", isAuthenticated, async (req, res) => {
-    const user = req.user as any;
-    if (!user?.isAdmin) return res.status(401).json({ message: "Unauthorized" });
-    const allEvents = await storage.getEvents();
-    res.json(allEvents);
+    try {
+      const sub = (req.user as any).claims.sub;
+      const user = await storage.getUser(sub);
+      console.log(`[admin] User ${user?.email} requesting admin events. isAdmin: ${user?.isAdmin}`);
+      if (!user?.isAdmin) return res.status(403).json({ message: "Unauthorized" });
+      const allEvents = await storage.getEvents();
+      res.json(allEvents);
+    } catch (error) {
+      console.error("[admin] Error fetching events:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
   });
   
   // Seed data

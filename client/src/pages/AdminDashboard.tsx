@@ -44,12 +44,12 @@ export default function AdminDashboard() {
   const approveMutation = useApproveBooking();
   const rejectMutation = useRejectBooking();
 
-  const { data: adminUsers, isLoading: usersLoading } = useQuery<any[]>({
+  const { data: adminUsers, isLoading: usersLoading, error: usersError } = useQuery<any[]>({
     queryKey: ["/api/admin/users"],
     enabled: !!user?.isAdmin,
   });
 
-  const { data: adminEvents, isLoading: eventsLoading } = useQuery<any[]>({
+  const { data: adminEvents, isLoading: eventsLoading, error: eventsError } = useQuery<any[]>({
     queryKey: ["/api/admin/events"],
     enabled: !!user?.isAdmin,
   });
@@ -62,12 +62,16 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!user?.isAdmin) {
+  if (!user?.isAdmin || usersError || eventsError) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-10 text-center">
         <XCircle className="w-16 h-16 text-destructive mb-4" />
         <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-        <p className="text-muted-foreground">You do not have administrative privileges to access this page.</p>
+        <p className="text-muted-foreground">
+          {usersError || eventsError 
+            ? "There was an error loading the admin data. Please ensure you have administrative privileges." 
+            : "You do not have administrative privileges to access this page."}
+        </p>
         <Button className="mt-6" onClick={() => window.location.href = "/"}>Return Home</Button>
       </div>
     );
