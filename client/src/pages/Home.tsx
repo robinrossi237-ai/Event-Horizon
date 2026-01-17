@@ -3,7 +3,7 @@ import { useEvents } from "@/hooks/use-events";
 import { EventCard } from "@/components/EventCard";
 import { Navbar } from "@/components/Navbar";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, Calendar } from "lucide-react";
+import { Search, Loader2, Calendar, Ticket } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Home() {
@@ -87,6 +87,48 @@ export default function Home() {
             ))}
           </div>
         )}
+
+        {/* How to Use Section */}
+        <section className="mt-24 pt-16 border-t border-border">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-display font-bold mb-4">How to Use TicketMaster</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Follow these simple steps to secure your spot at the most exciting events.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-card p-8 rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-primary/10 w-12 h-12 rounded-xl flex items-center justify-center mb-6">
+                <Search className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">1. Find Your Event</h3>
+              <p className="text-muted-foreground">
+                Browse our catalogue or use the search bar to find concerts, workshops, or festivals that interest you.
+              </p>
+            </div>
+
+            <div className="bg-card p-8 rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-primary/10 w-12 h-12 rounded-xl flex items-center justify-center mb-6">
+                <Ticket className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">2. Book & Upload Proof</h3>
+              <p className="text-muted-foreground">
+                Select your ticket types and upload a screenshot of your payment receipt (Fcfa) to request a reservation.
+              </p>
+            </div>
+
+            <div className="bg-card p-8 rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-primary/10 w-12 h-12 rounded-xl flex items-center justify-center mb-6">
+                <Calendar className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">3. Get Your Ticket</h3>
+              <p className="text-muted-foreground">
+                Once an admin verifies your payment, you'll receive a digital ticket with a unique QR code in your dashboard.
+              </p>
+            </div>
+          </div>
+        </section>
       </main>
 
       <footer className="border-t border-border bg-card py-10">
