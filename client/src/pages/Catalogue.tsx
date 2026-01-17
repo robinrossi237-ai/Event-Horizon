@@ -18,6 +18,20 @@ export default function Catalogue() {
 
   const categories = ["Music", "Technology", "Sports", "Arts", "Business", "Food", "Workshop", "Networking"];
 
+  const getCategoryColor = (category: string) => {
+    const colors: Record<string, string> = {
+      Music: "bg-blue-100 text-blue-700 border-blue-200",
+      Technology: "bg-purple-100 text-purple-700 border-purple-200",
+      Sports: "bg-green-100 text-green-700 border-green-200",
+      Arts: "bg-pink-100 text-pink-700 border-pink-200",
+      Business: "bg-slate-100 text-slate-700 border-slate-200",
+      Food: "bg-orange-100 text-orange-700 border-orange-200",
+      Workshop: "bg-yellow-100 text-yellow-700 border-yellow-200",
+      Networking: "bg-cyan-100 text-cyan-700 border-cyan-200",
+    };
+    return colors[category] || "bg-gray-100 text-gray-700 border-gray-200";
+  };
+
   const filteredEvents = events?.filter(event => {
     const minEventPrice = Math.min(...event.tickets.map(t => Number(t.price)));
     return minEventPrice >= priceRange[0] && minEventPrice <= priceRange[1];

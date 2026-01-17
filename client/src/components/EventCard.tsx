@@ -13,6 +13,20 @@ export function EventCard({ event }: EventCardProps) {
   const minPrice = Math.min(...event.tickets.map((t) => Number(t.price)));
   const formattedPrice = minPrice === 0 ? "Free" : `${minPrice.toLocaleString()} Fcfa`;
 
+  const getCategoryColor = (category: string) => {
+    const colors: Record<string, string> = {
+      Music: "bg-blue-100/80 text-blue-700",
+      Technology: "bg-purple-100/80 text-purple-700",
+      Sports: "bg-green-100/80 text-green-700",
+      Arts: "bg-pink-100/80 text-pink-700",
+      Business: "bg-slate-100/80 text-slate-700",
+      Food: "bg-orange-100/80 text-orange-700",
+      Workshop: "bg-yellow-100/80 text-yellow-700",
+      Networking: "bg-cyan-100/80 text-cyan-700",
+    };
+    return colors[category] || "bg-white/80 text-foreground";
+  };
+
   return (
     <Link
       href={`/event/${event.id}`}
@@ -25,7 +39,7 @@ export function EventCard({ event }: EventCardProps) {
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute top-4 left-4">
-          <Badge variant="secondary" className="backdrop-blur-md bg-white/80 font-bold text-foreground">
+          <Badge variant="secondary" className={`backdrop-blur-md font-bold ${getCategoryColor(event.category)}`}>
             {event.category}
           </Badge>
         </div>

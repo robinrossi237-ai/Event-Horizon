@@ -24,6 +24,20 @@ export default function EventDetails() {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const { isAuthenticated } = useAuth();
 
+  const getCategoryColor = (category: string) => {
+    const colors: Record<string, string> = {
+      Music: "bg-blue-100 text-blue-700 border-blue-200",
+      Technology: "bg-purple-100 text-purple-700 border-purple-200",
+      Sports: "bg-green-100 text-green-700 border-green-200",
+      Arts: "bg-pink-100 text-pink-700 border-pink-200",
+      Business: "bg-slate-100 text-slate-700 border-slate-200",
+      Food: "bg-orange-100 text-orange-700 border-orange-200",
+      Workshop: "bg-yellow-100 text-yellow-700 border-yellow-200",
+      Networking: "bg-cyan-100 text-cyan-700 border-cyan-200",
+    };
+    return colors[category] || "bg-secondary text-secondary-foreground";
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -68,7 +82,7 @@ export default function EventDetails() {
             {/* Left Column: Details */}
             <div className="flex-1 space-y-6">
               <div className="flex items-center gap-3">
-                <Badge variant="secondary" className="px-3 py-1 text-sm font-medium">{event.category}</Badge>
+                <Badge variant="secondary" className={`px-3 py-1 text-sm font-medium ${getCategoryColor(event.category)}`}>{event.category}</Badge>
                 {event.isPromoted && (
                   <Badge className="bg-primary text-primary-foreground">Featured Event</Badge>
                 )}
