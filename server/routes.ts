@@ -210,5 +210,55 @@ async function seed() {
       { name: "Early Bird", price: "299", quantity: 500, eventId: 0 },
       { name: "Standard", price: "499", quantity: 1000, eventId: 0 }
     ]);
+
+    await storage.createEvent({
+      title: "Gourmet Food Festival",
+      description: "Taste the best cuisines from around the world in one place.",
+      date: new Date("2025-08-10T11:00:00Z") as any,
+      location: "Riverside Park, NY",
+      category: "Food",
+      imageUrl: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      organizerId: "seed-organizer",
+    }, [
+      { name: "Standard Entry", price: "25000", quantity: 2000, eventId: 0 },
+      { name: "Tasting Pass", price: "45000", quantity: 500, eventId: 0 }
+    ]);
+
+    await storage.createEvent({
+      title: "Modern Art Exhibition",
+      description: "A showcase of contemporary digital and physical art.",
+      date: new Date("2025-10-05T10:00:00Z") as any,
+      location: "Metropolitan Museum, NY",
+      category: "Arts",
+      imageUrl: "https://images.unsplash.com/photo-1541963463532-d68292c34b19?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      organizerId: "seed-organizer",
+    }, [
+      { name: "Daily Pass", price: "15000", quantity: 300, eventId: 0 }
+    ]);
+
+    await storage.createEvent({
+      title: "Championship Finals",
+      description: "The ultimate showdown between the league's top teams.",
+      date: new Date("2025-11-12T19:00:00Z") as any,
+      location: "Madison Square Garden, NY",
+      category: "Sports",
+      imageUrl: "https://images.unsplash.com/photo-1504450758481-7338ef752454?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      organizerId: "seed-organizer",
+    }, [
+      { name: "Courtside", price: "250000", quantity: 50, eventId: 0 },
+      { name: "Lower Bowl", price: "75000", quantity: 500, eventId: 0 }
+    ]);
+
+    await storage.createEvent({
+      title: "Startup Founders Workshop",
+      description: "Learn how to scale your startup from 0 to 1.",
+      date: new Date("2025-12-01T09:30:00Z") as any,
+      location: "Innovation Hub, SF",
+      category: "Workshop",
+      imageUrl: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      organizerId: "seed-organizer",
+    }, [
+      { name: "Workshop Pass", price: "120000", quantity: 100, eventId: 0 }
+    ]);
   }
 }
