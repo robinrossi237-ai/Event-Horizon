@@ -22,7 +22,7 @@ export default function EventDetails() {
   const { id } = useParams();
   const { data: event, isLoading, error } = useEvent(Number(id));
   const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
@@ -57,6 +57,8 @@ export default function EventDetails() {
     );
   }
 
+  const isPast = new Date(event.date) < new Date();
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -85,6 +87,9 @@ export default function EventDetails() {
                 <Badge variant="secondary" className={`px-3 py-1 text-sm font-medium ${getCategoryColor(event.category)}`}>{event.category}</Badge>
                 {event.isPromoted && (
                   <Badge className="bg-primary text-primary-foreground">Featured Event</Badge>
+                )}
+                {isPast && (
+                  <div className="ml-3 px-3 py-1 rounded-md bg-red-100 border-2 border-red-600 text-sm text-red-800 font-medium">This event has terminated</div>
                 )}
               </div>
               
@@ -133,34 +138,65 @@ export default function EventDetails() {
                 </h3>
                 
                 <div className="space-y-4 mb-8">
-                  {event.tickets.map(ticket => (
-                    <div key={ticket.id} className="flex justify-between items-center p-4 bg-background rounded-xl border border-border shadow-sm">
-                      <div>
-                        <p className="font-bold text-foreground">{ticket.name}</p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                          <Clock className="w-3 h-3" />
-                          {ticket.available} remaining
-                        </p>
+                  {event.tickets.map(ticket => {
+                    const total = ticket.quantity || 1;
+                    const pct = total > 0 ? ticket.available / total : 0;
+                    let cardClass = "bg-background border-border";
+                    let availTextClass = "text-muted-foreground";
+                    if (pct <= 0.25) {
+                      cardClass = "bg-red-50 border-red-200";
+                      availTextClass = "text-red-700";
+                    } else if (pct <= 0.5) {
+                      cardClass = "bg-yellow-50 border-yellow-200";
+                      availTextClass = "text-yellow-700";
+                    } else {
+                      cardClass = "bg-background border-border";
+                      availTextClass = "text-muted-foreground";
+                    }
+
+                    return (
+                      <div key={ticket.id} className={`flex justify-between items-center p-4 rounded-xl border shadow-sm ${cardClass}`}>
+                        <div>
+                          <p className="font-bold text-foreground">{ticket.name}</p>
+                          <p className={`text-xs flex items-center gap-1 mt-1 ${availTextClass}`}>
+                            <Clock className="w-3 h-3" />
+                            {ticket.available} remaining
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-lg text-primary">{Number(ticket.price).toLocaleString()} Fcfa</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-lg text-primary">{Number(ticket.price).toLocaleString()} Fcfa</p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
-                <Button 
-                  className="w-full text-lg py-6 font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all" 
-                  size="lg"
-                  onClick={() => setIsBookingOpen(true)}
-                >
-                  Book Tickets Now
-                </Button>
-                
-                {!isAuthenticated && (
-                  <p className="text-xs text-center mt-3 text-muted-foreground">
-                    You'll need to sign in to complete your booking.
-                  </p>
+                {isAuthenticated && !user?.isAdmin ? (
+                  <Button 
+                    className="w-full text-lg py-6 font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all" 
+                    size="lg"
+                    onClick={() => {
+                      if (isPast) return;
+                      setIsBookingOpen(true);
+                    }}
+                    disabled={isPast}
+                  >
+                    {isPast ? "Event Terminated" : "Book Tickets Now"}
+                  </Button>
+                ) : isAuthenticated && user?.isAdmin ? (
+                  <div className="p-6">
+                    <Link href={`/create-event?id=${event.id}`}>
+                      <Button className="w-full text-lg py-6 font-bold shadow-lg bg-amber-500 hover:bg-amber-600 text-white">
+                        Edit Event
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="p-6 bg-yellow-50 rounded-lg border border-yellow-200 text-center">
+                    <p className="font-medium text-yellow-800 mb-3">You must create an account to reserve tickets.</p>
+                    <a href="/auth?mode=signup" className="inline-block bg-primary text-white px-4 py-2 rounded-md">Create an account</a>
+                    <p className="text-xs text-muted-foreground mt-3">After signing up, return here to complete your booking.</p>
+                  </div>
                 )}
                 
                 <div className="mt-6 flex justify-center">

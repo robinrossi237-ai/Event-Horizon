@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import { useEvents } from "@/hooks/use-events";
 import { EventCard } from "@/components/EventCard";
 import { Navbar } from "@/components/Navbar";
@@ -9,20 +10,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export default function Home() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
+  const { user } = useAuth();
   
   // Debounce search could be added here for optimization
   const { data: events, isLoading, error } = useEvents(search, category !== "all" ? category : undefined);
+
+  // Compute next three upcoming events based on local machine time
+  const upcomingEvents = (events || [])
+    .map((e) => ({ ...e, _date: e.date ? new Date(e.date) : null }))
+    .filter((e) => e._date instanceof Date && !Number.isNaN(e._date.getTime()) && e._date.getTime() > Date.now())
+    .sort((a, b) => a._date!.getTime() - b._date!.getTime())
+    .slice(0, 3);
 
   const categories = ["Music", "Technology", "Sports", "Arts", "Business", "Food"];
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
+      {/* (Notice removed per request) */}
       
       {/* Hero Section */}
       <section className="relative py-20 overflow-hidden bg-primary/5">
         <div className="absolute inset-0 bg-grid-white/10" />
-        <div className="container relative z-10 px-4 text-center">
+        <div className="container relative z-10 px-4 text-center flex flex-col items-center">
           <h1 className="text-4xl md:text-6xl font-display font-bold text-foreground mb-6">
             Discover <span className="text-primary">Unforgettable</span> Experiences
           </h1>
@@ -31,7 +41,7 @@ export default function Home() {
             Secure your spot today.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto bg-card p-2 rounded-2xl shadow-lg border border-border">
+          <div className="flex flex-col sm:flex-row gap-4 w-full max-w-2xl mx-auto bg-card p-2 rounded-2xl shadow-lg border border-border">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
               <Input
@@ -54,6 +64,11 @@ export default function Home() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="mt-8 flex justify-center">
+            <a href="/auth?mode=signup">
+              <button className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-lg hover:scale-[1.01]">Get Started</button>
+            </a>
           </div>
         </div>
       </section>
@@ -81,11 +96,17 @@ export default function Home() {
             <p className="text-muted-foreground">Try adjusting your search or filters.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {events?.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {upcomingEvents.length > 0 ? (
+                upcomingEvents.map((event) => <EventCard key={event.id} event={event} />)
+              ) : (
+                // Fallback: show the first three events if no upcoming future events
+                (events || []).slice(0, 3).map((event) => <EventCard key={event.id} event={event} />)
+              )}
+            </div>
+            {/* Optionally show count */}
+          </>
         )}
 
         {/* How to Use Section */}

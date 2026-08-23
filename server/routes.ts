@@ -1,141 +1,201 @@
 import type { Express } from "express";
 import type { Server } from "http";
-import { storage } from "./storage";
-import { db } from "./db";
-import { eq } from "drizzle-orm";
-import { users } from "@shared/schema";
-import { api } from "@shared/routes";
 import { z } from "zod";
-import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
-import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
+import { api } from "@shared/routes";
+import { storage } from "./storage";
+import { registerAuthRoutes, setupAuth, isAuthenticated } from "./replit_integrations/auth";
+import { registerObjectStorageRoutes } from "./object_storage/routes";
+import { db } from "./db";
+import { users } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
-export async function registerRoutes(
-  httpServer: Server,
-  app: Express
-): Promise<Server> {
-  // Setup Integrations
-  await setupAuth(app);
+export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
+  // Setup auth and object storage routes
+  setupAuth(app);
   registerAuthRoutes(app);
   registerObjectStorageRoutes(app);
 
   // Events
   app.get(api.events.list.path, async (req, res) => {
-    const search = req.query.search as string;
-    const category = req.query.category as string;
-    const events = await storage.getEvents(search, category);
-    res.json(events);
+    try {
+      const search = (req.query.search as string) || undefined;
+      const category = (req.query.category as string) || undefined;
+      const events = await storage.getEvents(search, category);
+      res.json(events);
+    } catch (err) {
+      console.error("GET /api/events error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
   });
 
   app.get(api.events.get.path, async (req, res) => {
-    const event = await storage.getEvent(Number(req.params.id));
-    if (!event) return res.status(404).json({ message: "Event not found" });
-    res.json(event);
+    try {
+      const id = Number(req.params.id);
+      const ev = await storage.getEvent(id);
+      if (!ev) return res.status(404).json({ message: "Event not found" });
+      res.json(ev);
+    } catch (err) {
+      console.error("GET /api/events/:id error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
   });
 
-  app.post(api.events.create.path, isAuthenticated, async (req, res) => {
+  app.post(api.events.create.path, isAuthenticated, async (req: any, res) => {
     try {
-      const userId = (req.user as any).claims.sub;
-      const user = await storage.getUser(userId);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Only admins can create events" });
+      // Accept ISO date strings from the client by coercing to Date
+      if (req.body && typeof req.body.date === "string") {
+        // Convert ISO string to Date object so Zod's date check passes
+        req.body.date = new Date(req.body.date);
       }
-
-      const bodySchema = api.events.create.input.extend({
-        date: z.coerce.date(),
-      });
-      const input = bodySchema.parse(req.body);
-      // Ensure organizerId is set to current user
-      const eventData = { ...input, organizerId: (req.user as any).claims.sub };
-      const event = await storage.createEvent(eventData, input.tickets);
-      res.status(201).json(event);
+      const input = api.events.create.input.parse(req.body);
+      const organizerId = req.user?.claims?.sub ?? req.user?.id ?? "unknown";
+      const created = await storage.createEvent({
+        title: input.title,
+        description: input.description,
+        date: input.date as any,
+        location: input.location,
+        category: input.category,
+        imageUrl: input.imageUrl,
+        organizerId,
+      } as any, input.tickets || []);
+      res.status(201).json(created);
     } catch (err) {
-      if (err instanceof z.ZodError) {
-        return res.status(400).json({ message: err.errors[0].message });
+      console.error("POST /api/events error:", err);
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/events/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const id = Number(req.params.id);
+      const body = req.body;
+      // Accept ISO date strings from the client by coercing to Date (same as POST)
+      if (body && typeof body.date === "string") {
+        body.date = new Date(body.date);
       }
-      throw err;
+      // Debug: log incoming date value/type to avoid timestamp mapping errors
+      try {
+        console.log("[debug] PUT /api/events body.date type:", typeof body.date, body.date);
+      } catch (e) {}
+      const updated = await storage.updateEvent(id, body as any, body.tickets as any[] | undefined);
+      if (!updated) return res.status(404).json({ message: "Event not found" });
+      res.json(updated);
+    } catch (err) {
+      console.error("PUT /api/events/:id error:", (err as any)?.stack || err);
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete(api.events.get.path, isAuthenticated, async (req: any, res) => {
+    try {
+      const id = Number(req.params.id);
+      const sub = (req.user as any).claims?.sub ?? (req.user as any).id;
+      const user = await storage.getUser(sub);
+      if (!user?.isAdmin) return res.status(403).json({ message: "Admin access required" });
+      const deleted = await storage.deleteEvent(id);
+      if (!deleted) return res.status(404).json({ message: "Event not found" });
+      res.json({ message: "Event deleted" });
+    } catch (err) {
+      console.error("DELETE /api/events/:id error:", err);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
   // Bookings
-  app.post(api.bookings.create.path, isAuthenticated, async (req, res) => {
+  app.post(api.bookings.create.path, isAuthenticated, async (req: any, res) => {
     try {
       const input = api.bookings.create.input.parse(req.body);
-      const userId = (req.user as any).claims.sub;
+      const userId = (req.user as any).claims?.sub ?? (req.user as any).id;
 
       // Calculate total amount (simplified)
-      // In a real app, fetch ticket prices from DB again to verify
       let total = 0;
       const event = await storage.getEvent(input.eventId);
       if (!event) return res.status(404).json({ message: "Event not found" });
-      
+
       for (const item of input.items) {
-        const ticket = event.tickets.find(t => t.id === item.ticketId);
-        if (ticket) {
-          total += Number(ticket.price) * item.quantity;
-        }
+        const ticket = event.tickets.find((t: any) => t.id === item.ticketId);
+        if (ticket) total += Number(ticket.price) * item.quantity;
       }
 
       const booking = await storage.createBooking(userId, input, total);
       res.status(201).json(booking);
     } catch (err) {
-      console.error(err);
-      if (err instanceof z.ZodError) {
-        return res.status(400).json({ message: err.errors[0].message });
-      }
+      console.error("POST /api/bookings error:", err);
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.get(api.bookings.list.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+  app.get(api.bookings.list.path, isAuthenticated, async (req: any, res) => {
+    const userId = (req.user as any).claims?.sub ?? (req.user as any).id;
     const bookings = await storage.getBookingsByUser(userId);
     res.json(bookings);
   });
-  
-  // Admin Routes (Simplified: any authenticated user can access for this demo, 
-  // or checks specific email/ID if needed. For now, assume open admin for MVP/demo)
-  // In production, add isAdmin middleware.
-  
-  app.get("/api/admin/bookings", isAuthenticated, async (req, res) => {
-     const userId = (req.user as any).claims.sub;
-     const user = await storage.getUser(userId);
-     if (!user?.isAdmin) {
-       return res.status(403).json({ message: "Admin access required" });
-     }
-     // Return all bookings for admin
-     const bookings = await storage.getAllBookings();
-     res.json(bookings);
-  });
 
-  app.post(api.bookings.approve.path, isAuthenticated, async (req, res) => {
-    const booking = await storage.updateBookingStatus(Number(req.params.id), "approved");
-    res.json(booking);
-  });
-
-  app.post(api.bookings.reject.path, isAuthenticated, async (req, res) => {
-    const booking = await storage.updateBookingStatus(Number(req.params.id), "rejected");
-    res.json(booking);
-  });
-
-  app.get("/api/admin/users", isAuthenticated, async (req, res) => {
+  app.get(api.paymentSettings.get.path, async (_req, res) => {
     try {
-      const sub = (req.user as any).claims.sub;
+      const settings = await storage.getPaymentSettings();
+      res.json(settings);
+    } catch (err) {
+      console.error("GET /api/payment-settings error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post(api.bookings.approve.path, isAuthenticated, async (req: any, res) => {
+    try {
+      const id = Number(req.params.id);
+      const booking = await storage.updateBookingStatus(id, "approved");
+      res.json(booking);
+    } catch (err) {
+      console.error("POST approve error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post(api.bookings.reject.path, isAuthenticated, async (req: any, res) => {
+    try {
+      const id = Number(req.params.id);
+      const booking = await storage.updateBookingStatus(id, "rejected");
+      res.json(booking);
+    } catch (err) {
+      console.error("POST reject error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Admin helpers
+  app.get("/api/admin/bookings", isAuthenticated, async (req: any, res) => {
+    const userId = (req.user as any).claims?.sub ?? (req.user as any).id;
+    const user = await storage.getUser(userId);
+    if (!user?.isAdmin) return res.status(403).json({ message: "Admin access required" });
+    const bookings = await storage.getAllBookings();
+    res.json(bookings);
+  });
+
+  app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
+    try {
+      const sub = (req.user as any).claims?.sub ?? (req.user as any).id;
       const user = await storage.getUser(sub);
-      console.log(`[admin] User ${user?.email} requesting admin users. isAdmin: ${user?.isAdmin}`);
       if (!user?.isAdmin) return res.status(403).json({ message: "Unauthorized" });
       const allUsers = await storage.getAllUsers();
-      res.json(allUsers);
+      const safe = allUsers.map((u: any) => {
+        const { passwordHash, ...rest } = u as any;
+        return rest;
+      });
+      res.json(safe);
     } catch (error) {
       console.error("[admin] Error fetching users:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.get("/api/admin/events", isAuthenticated, async (req, res) => {
+  app.get("/api/admin/events", isAuthenticated, async (req: any, res) => {
     try {
-      const sub = (req.user as any).claims.sub;
+      const sub = (req.user as any).claims?.sub ?? (req.user as any).id;
       const user = await storage.getUser(sub);
-      console.log(`[admin] User ${user?.email} requesting admin events. isAdmin: ${user?.isAdmin}`);
       if (!user?.isAdmin) return res.status(403).json({ message: "Unauthorized" });
       const allEvents = await storage.getEvents();
       res.json(allEvents);
@@ -144,8 +204,23 @@ export async function registerRoutes(
       res.status(500).json({ message: "Internal server error" });
     }
   });
-  
-  // Seed data
+
+  app.put(api.admin.paymentSettings.update.path, isAuthenticated, async (req: any, res) => {
+    try {
+      const sub = (req.user as any).claims?.sub ?? (req.user as any).id;
+      const user = await storage.getUser(sub);
+      if (!user?.isAdmin) return res.status(403).json({ message: "Unauthorized" });
+      const input = api.admin.paymentSettings.update.input.parse(req.body);
+      const updated = await storage.updatePaymentSettings(input);
+      res.json(updated);
+    } catch (error) {
+      console.error("[admin] Error updating payment settings:", error);
+      if (error instanceof z.ZodError) return res.status(400).json({ message: error.errors[0].message });
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Seed helper: promotes first user to admin and creates sample events if none exist
   await seed();
 
   return httpServer;
@@ -153,112 +228,37 @@ export async function registerRoutes(
 
 async function seed() {
   const existing = await storage.getEvents();
-  
-  // Make the first logged-in user an admin if they exist
-  // This is a helper for the user to get admin access easily in the demo
-  const allUsers = await db.select().from(users);
-  if (allUsers.length > 0) {
-    const firstUser = allUsers[0] as any;
-    if (!firstUser.isAdmin) {
-      await db.update(users).set({ isAdmin: true } as any).where(eq(users.id, firstUser.id));
-      console.log(`User ${firstUser.email} promoted to admin for demo.`);
+
+  // Promote first user to admin for demo convenience
+  try {
+    const allUsers = await db.select().from(users);
+    if (allUsers.length > 0) {
+      const firstUser = allUsers[0] as any;
+      if (!firstUser.isAdmin) {
+        await db.update(users).set({ isAdmin: true } as any).where(eq(users.id, firstUser.id));
+        console.log(`User ${firstUser.email} promoted to admin for demo.`);
+      }
     }
+  } catch (err) {
+    console.error("Seeding users error:", err);
   }
 
   if (existing.length === 0) {
-    // Create a dummy user ID for seeding (since we don't have a real user yet)
-    // In reality, events should be created by real users.
-    // We'll just use a placeholder string that matches no real user, 
-    // but the app should handle "unknown organizer" gracefully or we just insert it.
-    
-    // Note: Since organizer_id references users.id, we might need a user first.
-    // However, Replit Auth users are inserted on login.
-    // We can insert a dummy user for seeding if needed, or just let the first user create events.
-    // Let's create one seed event.
-    
-    // Actually, we can't easily seed events without a valid user ID if there's a foreign key constraint.
-    // The schema defined `organizerId: text("organizer_id").notNull()`.
-    // It says `// References users.id` in comment, but did I enforce it in Drizzle?
-    // In `shared/schema.ts`: 
-    // `organizer: one(users, { fields: [events.organizerId], references: [users.id] })`
-    // This is a Drizzle relation, not a SQL constraint unless `references(...)` is on the column definition.
-    // I didn't put `.references(() => users.id)` on the column, so it's a soft relation.
-    // So we can seed safely.
-    
-    await storage.createEvent({
-      title: "Summer Music Festival",
-      description: "The biggest music festival of the year featuring top artists.",
-      date: new Date("2025-07-15T18:00:00Z") as any,
-      location: "Central Park, NY",
-      category: "Music",
-      imageUrl: "https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-      organizerId: "seed-organizer",
-    }, [
-      { name: "General Admission", price: "50", quantity: 1000, eventId: 0 },
-      { name: "VIP", price: "150", quantity: 200, eventId: 0 }
-    ]);
-    
-     await storage.createEvent({
-      title: "Tech Conference 2025",
-      description: "Future of AI and Web Development.",
-      date: new Date("2025-09-20T09:00:00Z") as any,
-      location: "Convention Center, SF",
-      category: "Technology",
-      imageUrl: "https://images.unsplash.com/photo-1544531586-fde5298cdd40?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-      organizerId: "seed-organizer",
-    }, [
-      { name: "Early Bird", price: "299", quantity: 500, eventId: 0 },
-      { name: "Standard", price: "499", quantity: 1000, eventId: 0 }
-    ]);
-
-    await storage.createEvent({
-      title: "Gourmet Food Festival",
-      description: "Taste the best cuisines from around the world in one place.",
-      date: new Date("2025-08-10T11:00:00Z") as any,
-      location: "Riverside Park, NY",
-      category: "Food",
-      imageUrl: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-      organizerId: "seed-organizer",
-    }, [
-      { name: "Standard Entry", price: "25000", quantity: 2000, eventId: 0 },
-      { name: "Tasting Pass", price: "45000", quantity: 500, eventId: 0 }
-    ]);
-
-    await storage.createEvent({
-      title: "Modern Art Exhibition",
-      description: "A showcase of contemporary digital and physical art.",
-      date: new Date("2025-10-05T10:00:00Z") as any,
-      location: "Metropolitan Museum, NY",
-      category: "Arts",
-      imageUrl: "https://images.unsplash.com/photo-1541963463532-d68292c34b19?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-      organizerId: "seed-organizer",
-    }, [
-      { name: "Daily Pass", price: "15000", quantity: 300, eventId: 0 }
-    ]);
-
-    await storage.createEvent({
-      title: "Championship Finals",
-      description: "The ultimate showdown between the league's top teams.",
-      date: new Date("2025-11-12T19:00:00Z") as any,
-      location: "Madison Square Garden, NY",
-      category: "Sports",
-      imageUrl: "https://images.unsplash.com/photo-1504450758481-7338ef752454?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-      organizerId: "seed-organizer",
-    }, [
-      { name: "Courtside", price: "250000", quantity: 50, eventId: 0 },
-      { name: "Lower Bowl", price: "75000", quantity: 500, eventId: 0 }
-    ]);
-
-    await storage.createEvent({
-      title: "Startup Founders Workshop",
-      description: "Learn how to scale your startup from 0 to 1.",
-      date: new Date("2025-12-01T09:30:00Z") as any,
-      location: "Innovation Hub, SF",
-      category: "Workshop",
-      imageUrl: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-      organizerId: "seed-organizer",
-    }, [
-      { name: "Workshop Pass", price: "120000", quantity: 100, eventId: 0 }
-    ]);
+    try {
+      await storage.createEvent({
+        title: "Summer Music Festival",
+        description: "The biggest music festival of the year featuring top artists.",
+        date: new Date("2025-07-15T18:00:00Z") as any,
+        location: "Central Park, NY",
+        category: "Music",
+        imageUrl: "https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+        organizerId: "seed-organizer",
+      }, [
+        { name: "General Admission", price: "50", quantity: 1000, eventId: 0 },
+        { name: "VIP", price: "150", quantity: 200, eventId: 0 }
+      ]);
+    } catch (err) {
+      console.error("Seed events error:", err);
+    }
   }
 }

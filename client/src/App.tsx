@@ -11,6 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import CreateEvent from "@/pages/CreateEvent";
 import TicketView from "@/pages/TicketView";
+import AuthPage from "@/pages/auth";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/create-event" component={CreateEvent} />
       <Route path="/ticket/:id" component={TicketView} />
+      <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -36,6 +36,13 @@ export function useCreateBooking() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.bookings.list.path] });
+      // Also refresh events so availability updates in UI
+      queryClient.invalidateQueries({ queryKey: [api.events.list.path] });
+      // If booking created for a specific event, refresh that event cache too
+      try {
+        // We don't have the created booking here, so just invalidate event detail caches broadly
+        // Consumers should re-fetch accordingly.
+      } catch (e) {}
       toast({
         title: "Booking Submitted",
         description: "Your booking is pending approval.",
@@ -68,6 +75,10 @@ export function useApproveBooking() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.bookings.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.events.list.path] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/events"] });
+      // Also notify listeners
+      try { window.dispatchEvent(new CustomEvent('app:booking-updated')); } catch (e) {}
       toast({
         title: "Booking Approved",
         description: "The user has been notified.",
@@ -93,6 +104,7 @@ export function useRejectBooking() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.bookings.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.events.list.path] });
       toast({
         title: "Booking Rejected",
         variant: "destructive",

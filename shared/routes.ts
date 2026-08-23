@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertEventSchema, insertTicketSchema, events, tickets, bookings } from './schema';
+import { insertEventSchema, insertTicketSchema, events, tickets, bookings, paymentSettings } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -16,6 +16,11 @@ export const errorSchemas = {
     message: z.string(),
   }),
 };
+
+const paymentSettingsSchema = z.object({
+  mobileMoneyNumber: z.string().min(1),
+  orangeMoneyNumber: z.string().min(1),
+});
 
 export const api = {
   events: {
@@ -96,6 +101,15 @@ export const api = {
       },
     },
   },
+  paymentSettings: {
+    get: {
+      method: 'GET' as const,
+      path: '/api/payment-settings',
+      responses: {
+        200: z.custom<typeof paymentSettings.$inferSelect>(),
+      },
+    },
+  },
   admin: {
     users: {
       method: 'GET' as const,
@@ -111,6 +125,18 @@ export const api = {
       responses: {
         200: z.array(z.any()),
         401: errorSchemas.unauthorized,
+      },
+    },
+    paymentSettings: {
+      update: {
+        method: 'PUT' as const,
+        path: '/api/admin/payment-settings',
+        input: paymentSettingsSchema,
+        responses: {
+          200: z.custom<typeof paymentSettings.$inferSelect>(),
+          400: errorSchemas.validation,
+          401: errorSchemas.unauthorized,
+        },
       },
     },
   },

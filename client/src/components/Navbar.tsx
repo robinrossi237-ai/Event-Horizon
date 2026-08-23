@@ -43,18 +43,20 @@ export function Navbar() {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <>
-              <Link href="/create-event">
-                <Button variant="default" size="sm" className="hidden sm:flex items-center gap-2">
-                  <Plus className="w-4 h-4" />
-                  Create Event
-                </Button>
-              </Link>
+              {user?.isAdmin && (
+                <Link href="/create-event">
+                  <Button variant="default" size="sm" className="hidden sm:flex items-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    Create Event
+                  </Button>
+                </Link>
+              )}
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                     <Avatar className="h-9 w-9 border border-border">
-                      <AvatarImage src={user?.profileImageUrl} alt={user?.firstName || "User"} />
+                      <AvatarImage src={user?.profileImageUrl ?? undefined} alt={user?.firstName || "User"} />
                       <AvatarFallback>{user?.firstName?.[0] || "U"}</AvatarFallback>
                     </Avatar>
                   </Button>
@@ -82,12 +84,14 @@ export function Navbar() {
                     </DropdownMenuItem>
                   </Link>
                   {/* Admin link could be guarded by role if roles existed */}
-                  <Link href="/admin">
-                    <DropdownMenuItem className="cursor-pointer text-orange-500 focus:text-orange-600">
-                      <ShieldCheck className="mr-2 h-4 w-4" />
-                      <span>Admin Panel</span>
-                    </DropdownMenuItem>
-                  </Link>
+                  {user?.isAdmin && (
+                    <Link href="/admin">
+                      <DropdownMenuItem className="cursor-pointer text-orange-500 focus:text-orange-600">
+                        <ShieldCheck className="mr-2 h-4 w-4" />
+                        <span>Admin Panel</span>
+                      </DropdownMenuItem>
+                    </Link>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => logout()} className="cursor-pointer text-destructive focus:text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />
@@ -97,12 +101,16 @@ export function Navbar() {
               </DropdownMenu>
             </>
           ) : (
-            <Button asChild variant="default" className="bg-primary hover:bg-primary/90">
-              <a href="/api/login">
-                <LogIn className="mr-2 h-4 w-4" />
-                Sign In
+            <div className="flex items-center gap-3">
+              <Link href="/auth?mode=signup">
+                <Button variant="default" className="bg-primary hover:bg-primary/90">
+                  Get Started
+                </Button>
+              </Link>
+              <a href="/api/login" className="text-sm text-muted-foreground hover:text-primary flex items-center gap-2">
+                <LogIn className="w-4 h-4" /> Sign In
               </a>
-            </Button>
+            </div>
           )}
         </div>
       </div>

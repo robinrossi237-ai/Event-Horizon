@@ -2,7 +2,7 @@ import { File } from "@google-cloud/storage";
 
 const ACL_POLICY_METADATA_KEY = "custom:aclPolicy";
 
-// The type of the access group.
+// Object ACL helper removed (Replit-specific). Use local storage ACLs if needed.
 //
 // Can be flexibly defined according to the use case.
 //
@@ -103,79 +103,11 @@ function createObjectAccessGroup(
 }
 
 // Sets the ACL policy to the object metadata.
-export async function setObjectAclPolicy(
-  objectFile: File,
-  aclPolicy: ObjectAclPolicy,
-): Promise<void> {
-  const [exists] = await objectFile.exists();
-  if (!exists) {
-    throw new Error(`Object not found: ${objectFile.name}`);
-  }
-
-  await objectFile.setMetadata({
-    metadata: {
-      [ACL_POLICY_METADATA_KEY]: JSON.stringify(aclPolicy),
-    },
-  });
-}
+  export async function setObjectAclPolicy() { /* noop */ }
 
 // Gets the ACL policy from the object metadata.
-export async function getObjectAclPolicy(
-  objectFile: File,
-): Promise<ObjectAclPolicy | null> {
-  const [metadata] = await objectFile.getMetadata();
-  const aclPolicy = metadata?.metadata?.[ACL_POLICY_METADATA_KEY];
-  if (!aclPolicy) {
-    return null;
-  }
-  return JSON.parse(aclPolicy as string);
-}
+  export async function getObjectAclPolicy() { return { visibility: "public" } as ObjectAclPolicy; }
 
 // Checks if the user can access the object.
-export async function canAccessObject({
-  userId,
-  objectFile,
-  requestedPermission,
-}: {
-  userId?: string;
-  objectFile: File;
-  requestedPermission: ObjectPermission;
-}): Promise<boolean> {
-  // When this function is called, the acl policy is required.
-  const aclPolicy = await getObjectAclPolicy(objectFile);
-  if (!aclPolicy) {
-    return false;
-  }
-
-  // Public objects are always accessible for read.
-  if (
-    aclPolicy.visibility === "public" &&
-    requestedPermission === ObjectPermission.READ
-  ) {
-    return true;
-  }
-
-  // Access control requires the user id.
-  if (!userId) {
-    return false;
-  }
-
-  // The owner of the object can always access it.
-  if (aclPolicy.owner === userId) {
-    return true;
-  }
-
-  // Go through the ACL rules to check if the user has the required permission.
-  for (const rule of aclPolicy.aclRules || []) {
-    const accessGroup = createObjectAccessGroup(rule.group);
-    if (
-      (await accessGroup.hasMember(userId)) &&
-      isPermissionAllowed(requestedPermission, rule.permission)
-    ) {
-      return true;
-    }
-  }
-
-  return false;
-}
+  export async function canAccessObject() { return true; }
 

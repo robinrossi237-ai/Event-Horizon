@@ -9,6 +9,7 @@ interface EventCardProps {
 }
 
 export function EventCard({ event }: EventCardProps) {
+  const isPast = new Date(event.date) < new Date();
   // Find lowest price
   const minPrice = Math.min(...event.tickets.map((t) => Number(t.price)));
   const formattedPrice = minPrice === 0 ? "Free" : `${minPrice.toLocaleString()} Fcfa`;
@@ -30,7 +31,7 @@ export function EventCard({ event }: EventCardProps) {
   return (
     <Link
       href={`/event/${event.id}`}
-      className="group block bg-card rounded-2xl overflow-hidden shadow-lg border border-border/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+      className={`group block bg-card rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ${isPast ? "border-2 border-red-600 bg-red-50/30 ring-1 ring-red-200/50" : "border border-border/50"}`}
     >
       <div className="relative aspect-[16/9] overflow-hidden">
         <img
@@ -48,6 +49,11 @@ export function EventCard({ event }: EventCardProps) {
             <Badge className="bg-primary text-white font-bold animate-pulse">
               Promoted
             </Badge>
+          </div>
+        )}
+        {isPast && (
+          <div className="absolute top-4 right-4">
+            <Badge className="bg-red-600 text-white font-bold">Terminated</Badge>
           </div>
         )}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 pt-12">

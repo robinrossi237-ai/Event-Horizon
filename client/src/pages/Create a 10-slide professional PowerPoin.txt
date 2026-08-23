@@ -1,0 +1,320 @@
+Create a 10-slide professional PowerPoint presentation for my software project titled:
+
+Event-Horizon: Smart Event Ticketing and Booking Platform
+
+Presentation goal:
+Build a polished academic/project-defense style presentation that explains the problem, the solution, the system features, the architecture, the workflows, the challenges, and the final outcomes of the project. The audience is a lecturer, supervisor, panel, or technical evaluators. The tone should be professional, confident, clear, and detailed, but not overloaded with text.
+
+Overall design instructions:
+- Use a clean modern presentation style.
+- Use a technology/startup visual theme with white backgrounds, indigo/blue accents, subtle gradients, and clean section dividers.
+- Use strong headings, short readable subheadings, and visually balanced layouts.
+- Mix text blocks, icons, architecture diagrams, and screenshots.
+- Use consistent typography and spacing.
+- Prefer layouts with 40% text and 60% visuals when screenshots are available.
+- Add small presenter-friendly subtitles where useful.
+- Do not make the slides look generic; make them feel like a real software engineering project presentation.
+- The product is an event management and ticket booking web application with admin moderation and proof-of-payment verification.
+
+Important accuracy instructions:
+Do not invent features that are not listed below.
+Base the presentation strictly on these actual project features:
+- Users can browse and search events.
+- Users can filter events by category and price.
+- Users can view event details.
+- Users can book tickets by selecting ticket quantities.
+- Users upload payment proof manually instead of paying through an integrated payment gateway.
+- The booking modal shows Mobile Money and Orange Money payment numbers.
+- Admin can edit those payment numbers in the dashboard.
+- Admin verifies uploaded proof and approves or rejects bookings.
+- When approved, the user receives a digital ticket with a QR code.
+- Admin can create, edit, and delete events.
+- If an event is terminated/past, the booking button becomes inactive and displays “event teeminated”.
+- The system uses role-based access: normal user and admin.
+- Authentication is email/password based.
+- The system is built with React, TypeScript, Vite, Wouter, React Query, Tailwind CSS, shadcn/ui, Node.js, Express, PostgreSQL, Drizzle ORM, Zod, session authentication, and file uploads.
+
+Now generate the presentation with exactly 10 slides and use the following structure:
+
+Slide 1: Title Slide
+Title:
+Event-Horizon: Smart Event Ticketing and Booking Platform
+
+Subtitle:
+A full-stack web application for discovering events, managing bookings, verifying payments, and issuing digital tickets
+
+Content to include:
+- Student/project presentation title
+- A brief one-line project summary:
+  “Event-Horizon is a web-based ticketing platform that allows users to discover events, reserve seats, upload payment proof, and receive approved digital tickets.”
+- Add a polished title layout with a hero screenshot in the background or on the right side.
+
+Image to insert:
+- Screenshot of the Home page / landing page with the hero section and event discovery interface.
+
+Speaker tone:
+Introduce the project, what it does, and why it matters.
+
+Slide 2: Problem Statement
+Title:
+Problem the Project Solves
+
+Content to include:
+Explain clearly that many event organizers and users face challenges such as:
+- Difficulty discovering available events in one place
+- Manual and disorganized booking processes
+- Poor verification of payments
+- Lack of centralized management for event organizers
+- No easy digital ticket generation after approval
+- Confusion in tracking ticket status for users
+
+Add a short concluding statement:
+“This project addresses these gaps by creating a centralized event booking platform with admin moderation and digital ticket delivery.”
+
+Visual suggestion:
+Use a split layout with problem bullets on the left and a supporting screenshot or abstract event-management visual on the right.
+
+Image to insert:
+- Screenshot of the event catalogue or home page showing the searchable event listing.
+
+Slide 3: Project Objectives
+Title:
+Project Objectives
+
+Content to include:
+Present the main objectives in a structured way:
+- Build a platform where users can browse and search events easily
+- Allow users to view event details before booking
+- Support ticket reservation with quantity selection
+- Allow users to upload payment proof after making payment externally
+- Enable admins to review bookings and validate proof manually
+- Generate downloadable digital tickets for approved users
+- Provide an admin dashboard for user, booking, event, and payment number management
+- Prevent booking for terminated events
+
+Add a short final line:
+“The goal was to create a practical, secure, and manageable event-ticketing workflow for both users and administrators.”
+
+Image to insert:
+- Screenshot of the event details page or booking area that visually supports the objectives.
+
+Slide 4: System Overview and User Flow
+Title:
+How the System Works
+
+Content to include:
+Explain the complete user flow in clear step-by-step form:
+1. User creates an account or logs in
+2. User browses the available events
+3. User filters/searches to find a suitable event
+4. User opens the event details page
+5. User selects ticket quantities
+6. User pays externally using Mobile Money or Orange Money
+7. User uploads payment proof
+8. Booking is submitted for admin review
+9. Admin approves or rejects the booking
+10. If approved, the user gets a digital ticket with a QR code
+
+Add a visual flow diagram showing arrows from one stage to the next.
+
+Images to insert:
+- Small screenshot of auth page
+- Small screenshot of event details page
+- Small screenshot of booking modal
+- Small screenshot of dashboard ticket page
+
+Style instruction:
+Make this slide highly visual with a process timeline or flowchart.
+
+Slide 5: Main User Features
+Title:
+Core Features for End Users
+
+Content to include:
+Explain the user-facing features in detail:
+- Landing page with event discovery
+- Search bar for quick event lookup
+- Category and price filtering in the catalogue
+- Event cards showing category, date, location, and price
+- Event details page with full event description and ticket types
+- Booking modal for selecting ticket quantity
+- Upload of payment proof after transfer
+- Booking status tracking in the user dashboard
+- Digital ticket download after admin approval
+- QR-based ticket verification concept
+- Disabled booking action for terminated events
+
+Also mention:
+“The interface was designed to make the booking process simple and transparent from discovery to ticket download.”
+
+Images to insert:
+- Screenshot of Home page with event cards
+- Screenshot of Catalogue page with filters
+- Screenshot of Dashboard page showing booking statuses
+
+Slide 6: Payment and Booking Verification Flow
+Title:
+Payment Proof and Booking Approval Workflow
+
+Content to include:
+Explain this feature carefully because it is one of the most important project-specific parts:
+- Payment is not completed through an automatic gateway
+- The user transfers money externally
+- The booking modal displays two payment options:
+  - Mobile Money
+  - Orange Money
+- The user sees the payment numbers directly in the modal
+- The user uploads a screenshot of the receipt/payment proof
+- Booking remains pending until admin verification
+- Admin checks the proof image and decides to approve or reject
+- This manual verification approach is useful for local payment methods and real-world operational flexibility
+
+Also include this recent enhancement:
+- Admin can edit the Mobile Money and Orange Money numbers directly from the dashboard
+- This makes the payment instruction system maintainable without changing source code
+
+Images to insert:
+- Large screenshot of the booking modal showing:
+  - ticket selection
+  - Mobile Money card
+  - Orange Money card
+  - payment proof upload section
+- Small screenshot of the admin Payments tab where the numbers are edited
+
+Slide 7: Admin Features and Management Tools
+Title:
+Administrative Dashboard and Controls
+
+Content to include:
+Describe the admin capabilities in detail:
+- View pending bookings awaiting verification
+- View uploaded payment proof
+- Approve or reject bookings
+- Manage all events
+- Create new events
+- Edit existing events
+- Delete events
+- View users in the system
+- View processed booking history
+- Configure payment numbers shown to users
+- Monitor event performance and booking-related information
+
+Add a short interpretation:
+“The admin dashboard serves as the operational control center of the application.”
+
+Images to insert:
+- Screenshot of Admin Dashboard pending approvals tab
+- Screenshot of Admin Dashboard events tab
+- Screenshot of Admin Dashboard payments tab
+
+Slide 8: Technologies and System Architecture
+Title:
+Technologies Used and System Architecture
+
+Content to include:
+Break the explanation into layers.
+
+Frontend:
+- React + TypeScript
+- Vite
+- Wouter routing
+- React Query
+- Tailwind CSS
+- shadcn/ui components
+
+Backend:
+- Node.js
+- Express
+- Session-based authentication
+- REST API endpoints
+
+Database and validation:
+- PostgreSQL
+- Drizzle ORM
+- Zod
+
+Other supporting features:
+- File upload handling for event images and payment proof
+- QR code generation for approved tickets
+
+Then explain architecture flow:
+- Frontend sends requests to backend API
+- Backend validates inputs and applies business rules
+- Backend reads/writes data in PostgreSQL
+- Uploads are stored and served back for preview
+- Admin actions update booking and event states
+- Approved bookings become downloadable tickets
+
+Visual instruction:
+Create a clean architecture diagram with four blocks:
+Frontend -> API/Backend -> Database -> File Upload Storage
+Use arrows and short annotations.
+
+Optional image:
+- If possible, include a smaller screenshot of the ticket page or admin page to reinforce the architecture.
+
+Slide 9: Challenges Encountered During Development
+Title:
+Implementation Challenges and Difficulties
+
+Content to include:
+Present realistic technical and project challenges such as:
+- Keeping frontend, backend, and shared schema contracts synchronized
+- Designing a booking workflow around manual payment proof instead of an automated payment gateway
+- Managing role-based access for users and admins
+- Handling image and proof uploads reliably
+- Maintaining consistency between booking status and ticket issuance
+- Making admin verification practical and easy to use
+- Evolving requirements, such as later adding editable payment numbers
+- Preventing booking on terminated/past events
+- Managing date/time comparisons and event states correctly
+- Ensuring a clean UI for both customer and admin use cases
+
+Conclude with:
+“These challenges improved the robustness of the final system and guided several architecture and UI decisions.”
+
+Images to insert:
+- Screenshot of admin proof review area
+- Screenshot of terminated event page where booking is disabled
+
+Slide 10: Results, Impact, and Conclusion
+Title:
+Results, Impact, and Conclusion
+
+Content to include:
+Summarize what the project achieved:
+- Centralized event discovery and booking
+- Practical manual payment verification flow
+- Better control for event administrators
+- Clear booking status for users
+- Digital ticket generation with QR code after approval
+- Extensible architecture for future upgrades
+
+Then include future improvement ideas:
+- Online payment gateway integration
+- Email or SMS notifications
+- Ticket scanning and validation dashboard at venue entrance
+- Analytics and reporting
+- Better event recommendations
+- Pagination and scalability improvements
+
+End with a concluding statement:
+“Event-Horizon demonstrates how a modern full-stack web application can simplify event booking, payment verification, and ticket distribution in a practical real-world setting.”
+
+Image to insert:
+- Screenshot of approved ticket page with QR code
+- Optional closing collage of 3 small screenshots:
+  - Home page
+  - Booking modal
+  - Admin dashboard
+
+Extra Gamma instructions:
+- Add short presenter notes or supporting captions where useful.
+- Keep each slide detailed but visually balanced.
+- Use diagrams, icons, and screenshot placeholders intentionally.
+- Where screenshots are specified, create image placeholder captions such as:
+  “Insert screenshot: Home page”
+  “Insert screenshot: Booking modal with payment cards”
+  “Insert screenshot: Admin payment settings”
+- Make sure the slides flow logically from problem to solution to implementation to impact.
+- Keep wording polished and presentation-ready, not like raw software documentation.

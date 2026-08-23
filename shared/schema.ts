@@ -38,6 +38,13 @@ export const bookings = pgTable("bookings", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const paymentSettings = pgTable("payment_settings", {
+  id: serial("id").primaryKey(),
+  mobileMoneyNumber: text("mobile_money_number").notNull().default("+237 677420606"),
+  orangeMoneyNumber: text("orange_money_number").notNull().default("659106128"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const bookingItems = pgTable("booking_items", {
   id: serial("id").primaryKey(),
   bookingId: integer("booking_id").notNull(),
@@ -97,10 +104,16 @@ export type Ticket = typeof tickets.$inferSelect;
 export type InsertTicket = z.infer<typeof insertTicketSchema>;
 export type Booking = typeof bookings.$inferSelect;
 export type BookingItem = typeof bookingItems.$inferSelect;
+export type PaymentSettings = typeof paymentSettings.$inferSelect;
 
 export type CreateEventRequest = InsertEvent & { tickets: InsertTicket[] };
 export type CreateBookingRequest = {
   eventId: number;
   items: { ticketId: number; quantity: number }[];
   paymentProofUrl: string;
+};
+
+export type UpdatePaymentSettingsRequest = {
+  mobileMoneyNumber: string;
+  orangeMoneyNumber: string;
 };

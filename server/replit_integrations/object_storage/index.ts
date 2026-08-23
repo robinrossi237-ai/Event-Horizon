@@ -1,21 +1,7 @@
-export {
-  ObjectStorageService,
-  ObjectNotFoundError,
-  objectStorageClient,
-} from "./objectStorage";
+// Replit object storage integration has been removed.
+// Use server/object_storage/routes.ts for local uploads instead.
 
-export type {
-  ObjectAclPolicy,
-  ObjectAccessGroup,
-  ObjectAccessGroupType,
-  ObjectAclRule,
-} from "./objectAcl";
-
-export {
-  canAccessObject,
-  getObjectAclPolicy,
-  setObjectAclPolicy,
-} from "./objectAcl";
-
-export { registerObjectStorageRoutes } from "./routes";
+export const registerObjectStorageRoutes = () => {
+  throw new Error("Replit object storage integration removed. Use ./object_storage instead.");
+};
 

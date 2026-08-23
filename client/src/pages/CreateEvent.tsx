@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Navbar } from "@/components/Navbar";
-import { useCreateEvent } from "@/hooks/use-events";
+import { useCreateEvent, useEvent, useUpdateEvent } from "@/hooks/use-events";
 import { useAuth } from "@/hooks/use-auth";
-import { ObjectUploader } from "@/components/ObjectUploader";
+// We'll use a simple multipart upload for admin image uploads
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,9 +31,12 @@ export default function CreateEvent() {
   const { user, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
   const createEvent = useCreateEvent();
+  const updateEvent = useUpdateEvent();
   
   const [date, setDate] = useState<Date>();
   const [imageUrl, setImageUrl] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   
   const [formData, setFormData] = useState({
     title: "",
@@ -47,6 +50,26 @@ export default function CreateEvent() {
     { name: "General Admission", price: "0", quantity: "100" }
   ]);
 
+  // Edit mode: check query param ?id=
+  const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const editingId = params?.get("id") ? Number(params.get("id")) : undefined;
+  const { data: existingEvent, isLoading: existingLoading } = useEvent(editingId);
+
+  // Populate form when editing event data loads
+  useEffect(() => {
+    if (!existingEvent || !editingId) return;
+    setFormData({
+      title: existingEvent.title,
+      description: existingEvent.description,
+      location: existingEvent.location,
+      category: existingEvent.category,
+      organizerId: existingEvent.organizerId ?? "current-user",
+    });
+    setDate(new Date(existingEvent.date));
+    setImageUrl(existingEvent.imageUrl || "");
+    setTickets((existingEvent.tickets || []).map((t: any) => ({ name: t.name, price: String(t.price), quantity: String(t.available || t.quantity || 0) })));
+  }, [existingEvent, editingId]);
+
   if (authLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
 
   if (!user) {
@@ -58,6 +81,8 @@ export default function CreateEvent() {
     setLocation("/");
     return null;
   }
+
+  const isEditing = typeof editingId === "number" && !isNaN(editingId);
 
   const addTicket = () => {
     setTickets([...tickets, { name: "", price: "0", quantity: "0" }]);
@@ -78,18 +103,31 @@ export default function CreateEvent() {
     if (!date || !imageUrl) return;
 
     try {
-      await createEvent.mutateAsync({
-        ...formData,
-        date: date.toISOString() as any,
-        imageUrl,
-        tickets: tickets.map(t => ({
-          name: t.name,
-          price: t.price, // API schema expects numeric string
-          quantity: parseInt(t.quantity),
-          eventId: 0 // placeholder
-        }))
-      });
-      setLocation("/");
+      if (editingId) {
+        await updateEvent.mutateAsync({ id: editingId, data: {
+          ...formData,
+          date: date.toISOString() as any,
+          imageUrl,
+          tickets: tickets.map(t => ({ name: t.name, price: t.price, quantity: parseInt(t.quantity), eventId: 0 }))
+        } });
+      } else {
+        await createEvent.mutateAsync({
+          ...formData,
+          date: date.toISOString() as any,
+          imageUrl,
+          tickets: tickets.map(t => ({
+            name: t.name,
+            price: t.price, // API schema expects numeric string
+            quantity: parseInt(t.quantity),
+            eventId: 0 // placeholder
+          }))
+        });
+      }
+      if (editingId) {
+        setLocation(`/event/${editingId}`);
+      } else {
+        setLocation("/");
+      }
     } catch (err) {
       // Handled by hook
     }
@@ -101,8 +139,8 @@ export default function CreateEvent() {
       
       <main className="container mx-auto px-4 py-10 max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-display font-bold">Create New Event</h1>
-          <p className="text-muted-foreground">Fill in the details to publish your event.</p>
+          <h1 className="text-3xl font-display font-bold">{isEditing ? "Edit Event" : "Create New Event"}</h1>
+          <p className="text-muted-foreground">{isEditing ? "Modify the event details and save changes." : "Fill in the details to publish your event."}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -211,40 +249,49 @@ export default function CreateEvent() {
                       <p className="text-sm text-muted-foreground mb-4">Upload a high quality image for your event page.</p>
                     </>
                   )}
-                  
-                  {!imageUrl && (
-                    <ObjectUploader
-                      onGetUploadParameters={async (file) => {
-                        const res = await fetch("/api/uploads/request-url", {
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    style={{ display: "none" }}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        setUploading(true);
+                        const fd = new FormData();
+                        fd.append("file", file);
+                        const res = await fetch("/api/uploads", {
                           method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            name: file.name,
-                            size: file.size,
-                            contentType: file.type,
-                          }),
+                          body: fd,
+                          credentials: "include",
                         });
-                        const { uploadURL } = await res.json();
-                        return {
-                          method: "PUT",
-                          url: uploadURL,
-                          headers: { "Content-Type": file.type },
-                        };
-                      }}
-                      onComplete={(result) => {
-                        if (result.successful && result.successful.length > 0) {
-                          const upload = result.successful[0];
-                          const publicUrl = (upload.response?.body as any)?.publicUrl || upload.uploadURL.split("?")[0];
-                          setImageUrl(publicUrl as string);
-                        }
-                      }}
-                      buttonClassName="bg-secondary text-secondary-foreground hover:bg-secondary/80 w-full"
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        <ImageIcon className="w-4 h-4" />
-                        Choose Image
-                      </div>
-                    </ObjectUploader>
+                        if (!res.ok) throw new Error("Upload failed");
+                        const body = await res.json();
+                        const publicUrl = body.url || body.objectPath;
+                        if (publicUrl) setImageUrl(publicUrl);
+                      } catch (err) {
+                        console.error("Upload error:", err);
+                      } finally {
+                        setUploading(false);
+                        if (fileInputRef.current) fileInputRef.current.value = "";
+                      }
+                    }}
+                  />
+
+                  {!imageUrl && (
+                    <div>
+                      <Button
+                        type="button"
+                        className="bg-secondary text-secondary-foreground hover:bg-secondary/80 w-full"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                          {uploading ? "Uploading..." : "Choose Image"}
+                        </div>
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -309,13 +356,13 @@ export default function CreateEvent() {
 
           <div className="flex justify-end gap-4 pt-4">
             <Button type="button" variant="ghost" onClick={() => setLocation("/")}>Cancel</Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="bg-primary hover:bg-primary/90 text-white min-w-[200px]"
-              disabled={createEvent.isPending || !imageUrl}
+              disabled={(isEditing ? updateEvent.isPending : createEvent.isPending) || !imageUrl}
             >
-              {createEvent.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Publish Event
+              {(isEditing ? updateEvent.isPending : createEvent.isPending) ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {isEditing ? "Save Changes" : "Publish Event"}
             </Button>
           </div>
         </form>

@@ -1,8 +1,9 @@
 import { Navbar } from "@/components/Navbar";
-import { useBookings, useApproveBooking, useRejectBooking } from "@/hooks/use-bookings";
+import { useApproveBooking, useRejectBooking } from "@/hooks/use-bookings";
 import { useAuth } from "@/hooks/use-auth";
+import { usePaymentSettings, useUpdatePaymentSettings } from "@/hooks/use-payment-settings";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { 
   Loader2, 
   CheckCircle, 
@@ -13,12 +14,24 @@ import {
   Users,
   Calendar,
   History,
-  Clock
+  Clock,
+  Wallet
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useDeleteEvent } from "@/hooks/use-events";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
+// Safe formatter: avoids throwing on invalid dates
+const formatSafe = (dateLike: any, fmt = "MMM d, yyyy") => {
+  try {
+    const d = new Date(dateLike);
+    if (Number.isNaN(d.getTime())) return "N/A";
+    return format(d, fmt);
+  } catch {
+    return "N/A";
+  }
+};
 import {
   Table,
   TableBody,
@@ -40,22 +53,53 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export default function AdminDashboard() {
   const [historySearch, setHistorySearch] = useState("all");
   const [eventCategoryFilter, setEventCategoryFilter] = useState("all");
+  const [mobileMoneyNumber, setMobileMoneyNumber] = useState("");
+  const [orangeMoneyNumber, setOrangeMoneyNumber] = useState("");
   const { user, isLoading: authLoading } = useAuth();
-  const { data: bookings, isLoading: bookingsLoading } = useBookings();
   const approveMutation = useApproveBooking();
   const rejectMutation = useRejectBooking();
+  const deleteMutation = useDeleteEvent();
+  const updatePaymentSettings = useUpdatePaymentSettings();
+
+  const { data: paymentSettings, isLoading: paymentSettingsLoading } = usePaymentSettings(!!user?.isAdmin);
+
+  const { data: adminBookings, isLoading: adminBookingsLoading, error: adminBookingsError } = useQuery<any[]>({
+    queryKey: ["/api/admin/bookings"],
+    enabled: !!user?.isAdmin,
+    queryFn: async () => {
+      const res = await fetch("/api/admin/bookings", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load admin bookings");
+      return await res.json();
+    },
+  });
 
   const { data: adminUsers, isLoading: usersLoading, error: usersError } = useQuery<any[]>({
     queryKey: ["/api/admin/users"],
     enabled: !!user?.isAdmin,
+    queryFn: async () => {
+      const res = await fetch("/api/admin/users", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load admin users");
+      return await res.json();
+    },
   });
 
   const { data: adminEvents, isLoading: eventsLoading, error: eventsError } = useQuery<any[]>({
     queryKey: ["/api/admin/events"],
     enabled: !!user?.isAdmin,
+    queryFn: async () => {
+      const res = await fetch("/api/admin/events", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load admin events");
+      return await res.json();
+    },
   });
 
-  if (authLoading || bookingsLoading || usersLoading || eventsLoading) {
+  useEffect(() => {
+    if (!paymentSettings) return;
+    setMobileMoneyNumber(paymentSettings.mobileMoneyNumber || "");
+    setOrangeMoneyNumber(paymentSettings.orangeMoneyNumber || "");
+  }, [paymentSettings]);
+
+  if (authLoading || adminBookingsLoading || usersLoading || eventsLoading || paymentSettingsLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
@@ -63,7 +107,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!user?.isAdmin || usersError || eventsError) {
+  if (!user?.isAdmin || usersError || eventsError || adminBookingsError) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-10 text-center">
         <XCircle className="w-16 h-16 text-destructive mb-4" />
@@ -78,13 +122,14 @@ export default function AdminDashboard() {
     );
   }
 
-  const pendingBookings = bookings?.filter(b => b.status === "pending_approval") || [];
-  const processedBookings = (bookings?.filter(b => b.status === "approved" || b.status === "rejected") || [])
+  const pendingBookings = adminBookings?.filter(b => b.status === "pending_approval") || [];
+  const processedBookings = (adminBookings?.filter(b => b.status === "approved" || b.status === "rejected") || [])
     .filter(b => historySearch === "all" || b.eventId === Number(historySearch));
 
   const filteredAdminEvents = adminEvents?.filter(e => 
     eventCategoryFilter === "all" || e.category === eventCategoryFilter
   ) || [];
+
 
   const categories = ["Music", "Technology", "Sports", "Arts", "Business", "Food", "Workshop", "Networking"];
 
@@ -129,6 +174,9 @@ export default function AdminDashboard() {
             <TabsTrigger value="users" className="rounded-lg gap-2">
               <Users className="w-4 h-4" /> Users
             </TabsTrigger>
+            <TabsTrigger value="payments" className="rounded-lg gap-2">
+              <Wallet className="w-4 h-4" /> Payments
+            </TabsTrigger>
             <TabsTrigger value="events" className="rounded-lg gap-2">
               <Calendar className="w-4 h-4" /> Events
             </TabsTrigger>
@@ -166,7 +214,7 @@ export default function AdminDashboard() {
                           <TableCell className="font-medium">{booking.event?.title || "Unknown Event"}</TableCell>
                           <TableCell>{booking.user?.email || booking.userId}</TableCell>
                           <TableCell>{Number(booking.totalAmount).toLocaleString()} Fcfa</TableCell>
-                          <TableCell>{booking.createdAt ? format(new Date(booking.createdAt), "MMM d, HH:mm") : "N/A"}</TableCell>
+                          <TableCell>{booking.createdAt ? formatSafe(booking.createdAt, "MMM d, HH:mm") : "N/A"}</TableCell>
                           <TableCell>
                             <Dialog>
                               <DialogTrigger asChild>
@@ -276,7 +324,7 @@ export default function AdminDashboard() {
                               {booking.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>{booking.createdAt ? format(new Date(booking.createdAt), "MMM d, HH:mm") : "N/A"}</TableCell>
+                          <TableCell>{booking.createdAt ? formatSafe(booking.createdAt, "MMM d, HH:mm") : "N/A"}</TableCell>
                         </TableRow>
                       ))
                     )}
@@ -320,6 +368,61 @@ export default function AdminDashboard() {
             </div>
           </TabsContent>
 
+          <TabsContent value="payments">
+            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-border">
+                <h2 className="text-xl font-bold">Payment Numbers</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  These numbers are displayed in the booking payment-proof modal.
+                </p>
+              </div>
+              <form
+                className="p-6 grid gap-5 max-w-2xl"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  updatePaymentSettings.mutate({
+                    mobileMoneyNumber: mobileMoneyNumber.trim(),
+                    orangeMoneyNumber: orangeMoneyNumber.trim(),
+                  });
+                }}
+              >
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium" htmlFor="mobile-money-number">Mobile Money Number</label>
+                  <Input
+                    id="mobile-money-number"
+                    value={mobileMoneyNumber}
+                    onChange={(e) => setMobileMoneyNumber(e.target.value)}
+                    placeholder="+237 677420606"
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium" htmlFor="orange-money-number">Orange Money Number</label>
+                  <Input
+                    id="orange-money-number"
+                    value={orangeMoneyNumber}
+                    onChange={(e) => setOrangeMoneyNumber(e.target.value)}
+                    placeholder="659106128"
+                  />
+                </div>
+
+                <div className="pt-2">
+                  <Button
+                    type="submit"
+                    disabled={
+                      updatePaymentSettings.isPending ||
+                      mobileMoneyNumber.trim().length === 0 ||
+                      orangeMoneyNumber.trim().length === 0
+                    }
+                  >
+                    {updatePaymentSettings.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    Save Payment Numbers
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </TabsContent>
+
           <TabsContent value="events">
             <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
               <div className="p-6 border-b border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -348,22 +451,55 @@ export default function AdminDashboard() {
                       <TableHead>Category</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Tickets</TableHead>
+                      <TableHead>Seats Left</TableHead>
+                      <TableHead className="text-right">Revenue</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredAdminEvents?.map((e) => (
-                      <TableRow key={e.id}>
-                        <TableCell>
-                          <div className="w-16 h-12 rounded-md overflow-hidden bg-muted">
-                            <img src={e.imageUrl} alt={e.title} className="w-full h-full object-cover" />
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium">{e.title}</TableCell>
-                        <TableCell><Badge variant="outline" className={getCategoryColor(e.category)}>{e.category}</Badge></TableCell>
-                        <TableCell>{format(new Date(e.date), "MMM d, yyyy")}</TableCell>
-                        <TableCell>{e.tickets?.length || 0} types</TableCell>
-                      </TableRow>
-                    ))}
+                    {filteredAdminEvents?.map((e) => {
+                      // compute seats left as sum of available
+                      const seatsLeft = (e.tickets || []).reduce((s: number, t: any) => s + (t.available || 0), 0);
+                      // compute revenue from bookings
+                      const revenue = (adminBookings || []).filter((b: any) => b.status === 'approved' && b.eventId === e.id).reduce((r: number, b: any) => r + Number(b.totalAmount || 0), 0);
+
+                      return (
+                        <TableRow key={e.id}>
+                          <TableCell>
+                            <div className="w-16 h-12 rounded-md overflow-hidden bg-muted">
+                              <img src={e.imageUrl} alt={e.title} className="w-full h-full object-cover" />
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-medium">{e.title}</TableCell>
+                          <TableCell><Badge variant="outline" className={getCategoryColor(e.category)}>{e.category}</Badge></TableCell>
+                          <TableCell>{formatSafe(e.date, "MMM d, yyyy")}</TableCell>
+                          <TableCell>{e.tickets?.length || 0} types</TableCell>
+                          <TableCell>{seatsLeft.toString()}</TableCell>
+                          <TableCell className="text-right font-mono">{Number(revenue).toLocaleString()} Fcfa</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button size="sm" onClick={() => window.location.href = `/create-event?id=${e.id}`}>Edit</Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={async () => {
+                                  const ok = window.confirm(`Delete event "${e.title}"? This action cannot be undone.`);
+                                  if (!ok) return;
+                                  try {
+                                    await deleteMutation.mutateAsync(e.id);
+                                    // Optionally refresh manually
+                                  } catch (err) {
+                                    // Hook will show toast
+                                  }
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>

@@ -18,6 +18,13 @@ export default function TicketView() {
   const { data: bookings, isLoading } = useBookings();
   
   const booking = bookings?.find(b => b.id === Number(id));
+  
+  // support optional query param ?item=<index> to show a specific ticket from the booking
+  const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const itemIndex = params?.get("item") ? Number(params.get("item")) : 0;
+
+  const items = ((booking as any)?.items as any[]) || [];
+  const ticketItem = items[itemIndex] || items[0] || null;
 
   if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
   if (!booking || booking.status !== "approved") return <div className="p-10">Ticket not found or not approved.</div>;
@@ -82,12 +89,12 @@ export default function TicketView() {
           <div className="p-8 pt-0 text-center">
             <div className="flex flex-col items-center justify-center mb-6">
               <div className="bg-white p-4 rounded-2xl shadow-inner border border-gray-100">
-                <QRCode value={`booking:${booking.id}`} />
+                <QRCode value={`booking:${booking.id}${ticketItem ? `:item:${ticketItem.ticket?.id ?? ticketItem.id}` : ""}`} />
               </div>
             </div>
             
             <div className="bg-gray-100 py-3 px-6 rounded-xl inline-block mb-4 border border-gray-200">
-              <p className="text-lg font-mono font-bold text-black">TICKET ID: #{booking.id}</p>
+              <p className="text-lg font-mono font-bold text-black">TICKET ID: #{booking.id}{ticketItem ? ` - ${ticketItem.ticket?.name || ticketItem.name || `Item ${itemIndex+1}`}` : ""}</p>
             </div>
             <p className="text-xs text-gray-400">Show this QR code at the entrance for validation</p>
           </div>
