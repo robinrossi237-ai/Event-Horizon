@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { useApproveBooking, useRejectBooking } from "@/hooks/use-bookings";
 import { useAuth } from "@/hooks/use-auth";
 import { usePaymentSettings, useUpdatePaymentSettings } from "@/hooks/use-payment-settings";
@@ -149,38 +150,40 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       
-      <main className="container mx-auto px-4 py-10">
-        <div className="flex items-center gap-3 mb-10">
+      <main className="flex-1 container mx-auto px-4 py-10">
+        <div className="mb-10 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
           <div className="bg-orange-100 p-2 rounded-lg">
             <ShieldCheck className="w-8 h-8 text-orange-600" />
           </div>
           <div>
-            <h1 className="text-3xl font-display font-bold">Admin Dashboard</h1>
+            <h1 className="text-2xl font-display font-bold sm:text-3xl">Admin Dashboard</h1>
             <p className="text-muted-foreground">Manage users, events, and bookings.</p>
           </div>
         </div>
 
         <Tabs defaultValue="pending" className="space-y-6">
-          <TabsList className="bg-muted p-1 rounded-xl">
-            <TabsTrigger value="pending" className="rounded-lg gap-2">
-              <Clock className="w-4 h-4" /> Pending ({pendingBookings.length})
-            </TabsTrigger>
-            <TabsTrigger value="history" className="rounded-lg gap-2">
-              <History className="w-4 h-4" /> History
-            </TabsTrigger>
-            <TabsTrigger value="users" className="rounded-lg gap-2">
-              <Users className="w-4 h-4" /> Users
-            </TabsTrigger>
-            <TabsTrigger value="payments" className="rounded-lg gap-2">
-              <Wallet className="w-4 h-4" /> Payments
-            </TabsTrigger>
-            <TabsTrigger value="events" className="rounded-lg gap-2">
-              <Calendar className="w-4 h-4" /> Events
-            </TabsTrigger>
-          </TabsList>
+          <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+            <TabsList className="w-max bg-muted p-1 rounded-xl">
+              <TabsTrigger value="pending" className="shrink-0 rounded-lg gap-2">
+                <Clock className="w-4 h-4" /> Pending ({pendingBookings.length})
+              </TabsTrigger>
+              <TabsTrigger value="history" className="shrink-0 rounded-lg gap-2">
+                <History className="w-4 h-4" /> History
+              </TabsTrigger>
+              <TabsTrigger value="users" className="shrink-0 rounded-lg gap-2">
+                <Users className="w-4 h-4" /> Users
+              </TabsTrigger>
+              <TabsTrigger value="payments" className="shrink-0 rounded-lg gap-2">
+                <Wallet className="w-4 h-4" /> Payments
+              </TabsTrigger>
+              <TabsTrigger value="events" className="shrink-0 rounded-lg gap-2">
+                <Calendar className="w-4 h-4" /> Events
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="pending" className="space-y-6">
             <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
@@ -218,7 +221,7 @@ export default function AdminDashboard() {
                           <TableCell>
                             <Dialog>
                               <DialogTrigger asChild>
-                                <Button variant="outline" size="sm" className="h-8 gap-2">
+                                <Button variant="outline" size="sm" className="h-9 gap-2 sm:h-8">
                                   <Eye className="w-3 h-3" /> View Proof
                                 </Button>
                               </DialogTrigger>
@@ -247,7 +250,7 @@ export default function AdminDashboard() {
                             <div className="flex justify-end gap-2">
                               <Button 
                                 size="sm" 
-                                className="bg-green-600 hover:bg-green-700 h-8 w-8 p-0"
+                                className="bg-green-600 hover:bg-green-700 h-11 w-11 p-0 sm:h-9 sm:w-9"
                                 onClick={() => approveMutation.mutate(booking.id)}
                                 disabled={approveMutation.isPending}
                               >
@@ -256,7 +259,7 @@ export default function AdminDashboard() {
                               <Button 
                                 size="sm" 
                                 variant="destructive"
-                                className="h-8 w-8 p-0"
+                                className="h-11 w-11 p-0 sm:h-9 sm:w-9"
                                 onClick={() => rejectMutation.mutate(booking.id)}
                                 disabled={rejectMutation.isPending}
                               >
@@ -507,6 +510,8 @@ export default function AdminDashboard() {
           </TabsContent>
         </Tabs>
       </main>
+
+      <Footer />
     </div>
   );
 }

@@ -4,8 +4,14 @@ import path from "path";
 import fs from "fs";
 
 export function registerObjectStorageRoutes(app: Express): void {
-  const uploadDir = path.join(process.cwd(), "attached_assets", "uploads");
-  if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+  // Prefer a persistent disk (set via UPLOAD_DIR in production); fall back to the legacy repo directory.
+  const uploadDir = process.env.UPLOAD_DIR
+    ? path.resolve(process.env.UPLOAD_DIR)
+    : path.join(process.cwd(), "attached_assets", "uploads");
+  const legacyDir = path.join(process.cwd(), "attached_assets", "uploads");
+  for (const dir of [uploadDir, legacyDir]) {
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  }
 
   const storage = multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, uploadDir),
@@ -80,13 +86,16 @@ export function registerObjectStorageRoutes(app: Express): void {
   app.get("/objects/:objectPath(*)", (req, res) => {
     try {
       const raw = req.params.objectPath as string; // e.g. uploads/filename
-      const filePath = path.join(process.cwd(), "attached_assets", raw);
-      if (!filePath.startsWith(uploadDir)) {
-        // Prevent serving files outside the upload dir
-        return res.status(403).json({ error: "Forbidden" });
+      // Serve from the persistent disk first, then the legacy committed dir (seed images).
+      for (const dir of [uploadDir, legacyDir]) {
+        const filePath = path.join(dir, raw);
+        if (!filePath.startsWith(dir + path.sep)) {
+          // Prevent serving files outside allowed dirs
+          return res.status(403).json({ error: "Forbidden" });
+        }
+        if (fs.existsSync(filePath)) return res.sendFile(filePath);
       }
-      if (!fs.existsSync(filePath)) return res.status(404).json({ error: "Not found" });
-      return res.sendFile(filePath);
+      return res.status(404).json({ error: "Not found" });
     } catch (err) {
       console.error("Error serving object:", err);
       return res.status(500).json({ error: "Failed to serve object" });

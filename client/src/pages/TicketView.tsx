@@ -1,6 +1,7 @@
 import { useParams, Link } from "wouter";
 import { useBookings } from "@/hooks/use-bookings";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { Loader2, Calendar, MapPin, Download, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -106,6 +107,8 @@ export default function TicketView() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

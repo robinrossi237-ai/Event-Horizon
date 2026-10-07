@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useEvents } from "@/hooks/use-events";
 import { EventCard } from "@/components/EventCard";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2, Calendar, Ticket } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,14 +17,14 @@ export default function Home() {
   // Debounce search could be added here for optimization
   const { data: events, isLoading, error } = useEvents(search, category !== "all" ? category : undefined);
 
-  // Compute next three upcoming events based on local machine time
+  // Next six upcoming events based on local machine time
   const upcomingEvents = (events || [])
     .map((e) => ({ ...e, _date: e.date ? new Date(e.date) : null }))
     .filter((e) => e._date instanceof Date && !Number.isNaN(e._date.getTime()) && e._date.getTime() > Date.now())
     .sort((a, b) => a._date!.getTime() - b._date!.getTime())
-    .slice(0, 3);
+    .slice(0, 6);
 
-  const categories = ["Music", "Technology", "Sports", "Arts", "Business", "Food"];
+  const categories = ["Music", "Technology", "Sports", "Arts", "Business", "Food", "Workshop", "Networking"];
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -30,18 +32,35 @@ export default function Home() {
       {/* (Notice removed per request) */}
       
       {/* Hero Section */}
-      <section className="relative py-20 overflow-hidden bg-primary/5">
-        <div className="absolute inset-0 bg-grid-white/10" />
-        <div className="container relative z-10 px-4 text-center flex flex-col items-center">
-          <h1 className="text-4xl md:text-6xl font-display font-bold text-foreground mb-6">
+      <section className="relative isolate overflow-hidden bg-primary/5">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -z-10 bg-cover"
+          style={{
+            backgroundPosition: "center 40%",
+            backgroundImage:
+              "linear-gradient(180deg, hsl(var(--background) / 0.82) 0%, hsl(var(--background) / 0.88) 55%, hsl(var(--background) / 0.97) 100%), url('/hero-bg.jpg')",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -z-10 [background-image:linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] [background-size:56px_56px] [mask-image:radial-gradient(ellipse_75%_60%_at_50%_35%,black,transparent)]"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 -top-40 -z-10 h-80 bg-primary/20 blur-3xl"
+        />
+        <div className="container relative mx-auto flex min-h-[70vh] items-center justify-center px-4 py-14 sm:py-20">
+          <div className="flex w-full max-w-3xl flex-col items-center text-center">
+          <h1 className="text-balance text-4xl md:text-6xl font-display font-bold text-foreground mb-6">
             Discover <span className="text-primary">Unforgettable</span> Experiences
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-10">
+          <p className="text-balance text-lg text-muted-foreground max-w-2xl mb-10">
             Book tickets for the hottest concerts, workshops, and events happening around you.
             Secure your spot today.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 w-full max-w-2xl mx-auto bg-card p-2 rounded-2xl shadow-lg border border-border">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full max-w-2xl bg-card p-1.5 sm:p-2 rounded-2xl shadow-lg border border-border">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
               <Input
@@ -65,19 +84,28 @@ export default function Home() {
               </Select>
             </div>
           </div>
-          <div className="mt-8 flex justify-center">
-            <a href="/auth?mode=signup">
-              <button className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-lg hover:scale-[1.01]">Get Started</button>
-            </a>
+          <div className="mt-8 flex w-full justify-center">
+            <Link
+              href="/auth?mode=signup"
+              className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-lg hover:scale-[1.01]"
+            >
+              Get Started
+            </Link>
+          </div>
           </div>
         </div>
       </section>
 
       {/* Events Grid */}
       <main className="flex-1 container mx-auto px-4 py-16">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
           <h2 className="text-2xl font-display font-bold">Upcoming Events</h2>
-          <span className="text-muted-foreground text-sm">{events?.length || 0} events found</span>
+          <div className="flex items-center gap-4">
+            <span className="text-muted-foreground text-sm">{events?.length || 0} events found</span>
+            <Link href="/catalogue" className="text-sm font-semibold text-primary hover:underline">
+              View all
+            </Link>
+          </div>
         </div>
 
         {isLoading ? (
@@ -101,11 +129,10 @@ export default function Home() {
               {upcomingEvents.length > 0 ? (
                 upcomingEvents.map((event) => <EventCard key={event.id} event={event} />)
               ) : (
-                // Fallback: show the first three events if no upcoming future events
-                (events || []).slice(0, 3).map((event) => <EventCard key={event.id} event={event} />)
+                // Fallback: show the most recent events if no upcoming future events
+                (events || []).slice(0, 6).map((event) => <EventCard key={event.id} event={event} />)
               )}
             </div>
-            {/* Optionally show count */}
           </>
         )}
 
@@ -152,11 +179,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-border bg-card py-10">
-        <div className="container mx-auto px-4 text-center text-muted-foreground text-sm">
-          <p>© 2024 TicketMaster. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useEvents } from "@/hooks/use-events";
 import { EventCard } from "@/components/EventCard";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, Calendar, Tag, Filter } from "lucide-react";
+import { Search, Loader2, Calendar, Tag, Filter, ChevronDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -13,6 +14,12 @@ export default function Catalogue() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [priceRange, setPriceRange] = useState([0, 1000000]); // Max 1,000,000 Fcfa
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const activeFilterCount =
+    (search ? 1 : 0) +
+    (category !== "all" ? 1 : 0) +
+    (priceRange[0] > 0 || priceRange[1] < 1000000 ? 1 : 0);
   
   const { data: events, isLoading, error } = useEvents(search, category !== "all" ? category : undefined);
 
@@ -44,7 +51,28 @@ export default function Catalogue() {
       <main className="flex-1 container mx-auto px-4 py-10">
         <div className="flex flex-col md:flex-row gap-8">
           {/* Filters Sidebar */}
-          <aside className="w-full md:w-64 space-y-8">
+          <aside className="w-full md:w-64">
+            <button
+              type="button"
+              onClick={() => setFiltersOpen((o) => !o)}
+              aria-expanded={filtersOpen}
+              className="flex w-full items-center justify-between gap-2 rounded-xl border border-border bg-card px-4 py-3 text-left font-semibold md:hidden"
+            >
+              <span className="flex items-center gap-2">
+                <Filter className="w-5 h-5 text-primary" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </span>
+              <ChevronDown
+                className={`h-5 w-5 text-muted-foreground transition-transform ${filtersOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            <div className={`${filtersOpen ? "block" : "hidden"} mt-4 md:mt-0 md:block`}>
             <div>
               <h2 className="text-xl font-bold flex items-center gap-2 mb-4">
                 <Filter className="w-5 h-5 text-primary" />
@@ -115,11 +143,12 @@ export default function Catalogue() {
                 </Button>
               </div>
             </div>
+            </div>
           </aside>
 
           {/* Results Grid */}
           <div className="flex-1">
-            <div className="flex items-center justify-between mb-8">
+            <div className="mb-8 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
               <h1 className="text-3xl font-display font-bold">Event Catalogue</h1>
               <span className="text-muted-foreground text-sm">{filteredEvents?.length || 0} events found</span>
             </div>
@@ -149,6 +178,8 @@ export default function Catalogue() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

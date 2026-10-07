@@ -2,6 +2,7 @@ import { useParams, Link } from "wouter";
 import { useState } from "react";
 import { useEvent } from "@/hooks/use-events";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { BookingModal } from "@/components/BookingModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,24 +61,24 @@ export default function EventDetails() {
   const isPast = new Date(event.date) < new Date();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       
-      <div className="relative h-[40vh] md:h-[50vh] w-full overflow-hidden">
+      <div className="relative h-[40vh] md:h-[50vh] w-full shrink-0 overflow-hidden">
         <img 
           src={event.imageUrl} 
           alt={event.title} 
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
-        <Link href="/" className="absolute top-6 left-6">
-          <Button variant="secondary" className="gap-2 backdrop-blur-md bg-white/50 hover:bg-white/80">
+        <Link href="/" className="absolute top-4 left-4 md:top-6 md:left-6">
+          <Button variant="secondary" className="gap-2 backdrop-blur-md bg-white/50 hover:bg-white/80 h-11 px-4 md:h-9">
             <ArrowLeft className="w-4 h-4" /> Back to Events
           </Button>
         </Link>
       </div>
 
-      <main className="container mx-auto px-4 -mt-32 relative z-10 pb-20">
+      <main className="flex-1 container mx-auto px-4 -mt-20 md:-mt-32 relative z-10 pb-20">
         <div className="bg-card rounded-3xl shadow-2xl border border-border/50 overflow-hidden">
           <div className="p-6 md:p-10 flex flex-col lg:flex-row gap-10">
             
@@ -93,7 +94,7 @@ export default function EventDetails() {
                 )}
               </div>
               
-              <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-foreground">
                 {event.title}
               </h1>
 
@@ -131,7 +132,7 @@ export default function EventDetails() {
 
             {/* Right Column: Tickets */}
             <div className="lg:w-[400px] shrink-0">
-              <div className="bg-secondary/20 rounded-2xl p-6 border border-border sticky top-24">
+              <div className="bg-secondary/20 rounded-2xl p-6 border border-border lg:sticky lg:top-24">
                 <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
                   <Ticket className="w-5 h-5 text-primary" />
                   Select Tickets
@@ -210,6 +211,8 @@ export default function EventDetails() {
           </div>
         </div>
       </main>
+
+      <Footer />
 
       <BookingModal 
         event={event} 

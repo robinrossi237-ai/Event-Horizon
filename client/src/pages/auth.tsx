@@ -133,15 +133,15 @@ function AuthCard() {
           </label>
         )}
 
-        <div className="flex items-center justify-between gap-4 mt-2">
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           {mode === "login" && (
-            <label className="flex items-center gap-2 text-sm text-gray-600">
-              <input type="checkbox" name="remember" className="h-4 w-4 text-indigo-600" />
+            <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-gray-600">
+              <input type="checkbox" name="remember" className="h-5 w-5 text-indigo-600" />
               Remember me
             </label>
           )}
 
-          <button type="button" onClick={() => window.location.href = "/api/login"} className="text-sm text-indigo-600 hover:underline">
+          <button type="button" onClick={() => window.location.href = "/api/login"} className="min-h-11 text-sm text-indigo-600 hover:underline">
             {mode === "login" ? "Forgot password?" : "Have an account? Sign in"}
           </button>
         </div>

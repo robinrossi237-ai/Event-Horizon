@@ -68,7 +68,7 @@ export function BookingModal({ event, open, onOpenChange }: BookingModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-2rem)] sm:max-w-xl max-h-[90vh] overflow-y-auto overscroll-contain">
         <DialogHeader>
           <DialogTitle className="text-2xl font-display font-bold">Book Tickets</DialogTitle>
           <DialogDescription>
@@ -85,18 +85,18 @@ export function BookingModal({ event, open, onOpenChange }: BookingModalProps) {
             </h4>
             <div className="space-y-3">
               {event.tickets.map((ticket) => (
-                <div key={ticket.id} className="flex items-center justify-between p-3 rounded-lg border bg-secondary/20">
-                  <div>
-                    <p className="font-medium">{ticket.name}</p>
+                <div key={ticket.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border bg-secondary/20">
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{ticket.name}</p>
                     <p className="text-sm text-muted-foreground">
                       {Number(ticket.price).toLocaleString()} Fcfa • {ticket.available} left
                     </p>
                   </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 shrink-0">
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8 rounded-full"
+                        className="h-11 w-11 rounded-full sm:h-9 sm:w-9"
                         onClick={() => handleQuantityChange(ticket.id, (ticketQuantities[ticket.id] || 0) - 1)}
                         disabled={(ticketQuantities[ticket.id] || 0) <= 0}
                       >
@@ -106,7 +106,7 @@ export function BookingModal({ event, open, onOpenChange }: BookingModalProps) {
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8 rounded-full"
+                        className="h-11 w-11 rounded-full sm:h-9 sm:w-9"
                         onClick={() => handleQuantityChange(ticket.id, (ticketQuantities[ticket.id] || 0) + 1)}
                         disabled={(ticketQuantities[ticket.id] || 0) >= ticket.available}
                       >
@@ -211,8 +211,8 @@ export function BookingModal({ event, open, onOpenChange }: BookingModalProps) {
               <div className="space-y-4">
                 <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-border group">
                   <img src={paymentProofUrl} alt="Payment Proof Preview" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Button type="button" variant="destructive" size="sm" onClick={() => setPaymentProofUrl(null)}>Remove Proof</Button>
+                  <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center bg-gradient-to-t from-black/70 to-transparent p-3 transition-opacity sm:inset-0 sm:bg-black/40 sm:opacity-0 sm:group-hover:opacity-100">
+                    <Button type="button" variant="destructive" size="sm" className="h-11 sm:h-8" onClick={() => setPaymentProofUrl(null)}>Remove Proof</Button>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-4 bg-green-50 text-green-700 rounded-lg border border-green-200">
@@ -224,12 +224,12 @@ export function BookingModal({ event, open, onOpenChange }: BookingModalProps) {
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+        <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:justify-end">
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button 
             onClick={handleSubmit} 
             disabled={!hasSelectedTickets || !paymentProofUrl || createBooking.isPending}
-            className="bg-primary hover:bg-primary/90 text-white px-8"
+            className="w-full bg-primary hover:bg-primary/90 text-white sm:w-auto sm:px-8"
           >
             {createBooking.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Confirm Booking

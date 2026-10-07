@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { useCreateEvent, useEvent, useUpdateEvent } from "@/hooks/use-events";
 import { useAuth } from "@/hooks/use-auth";
 // We'll use a simple multipart upload for admin image uploads
@@ -134,10 +135,10 @@ export default function CreateEvent() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       
-      <main className="container mx-auto px-4 py-10 max-w-4xl">
+      <main className="flex-1 container mx-auto px-4 py-10 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-display font-bold">{isEditing ? "Edit Event" : "Create New Event"}</h1>
           <p className="text-muted-foreground">{isEditing ? "Modify the event details and save changes." : "Fill in the details to publish your event."}</p>
@@ -302,7 +303,7 @@ export default function CreateEvent() {
             <h2 className="text-xl font-bold">Ticket Types</h2>
             {tickets.map((ticket, index) => (
               <Card key={index}>
-                <CardContent className="p-4 flex gap-4 items-end">
+                <CardContent className="p-4 flex flex-col gap-3 sm:flex-row sm:gap-4 sm:items-end">
                   <div className="flex-1 space-y-2">
                     <Label>Ticket Name</Label>
                     <Input 
@@ -312,7 +313,7 @@ export default function CreateEvent() {
                       required
                     />
                   </div>
-                  <div className="w-32 space-y-2">
+                  <div className="w-full space-y-2 sm:w-32">
                     <Label>Price (Fcfa)</Label>
                     <Input 
                       type="number"
@@ -324,7 +325,7 @@ export default function CreateEvent() {
                       required
                     />
                   </div>
-                  <div className="w-32 space-y-2">
+                  <div className="w-full space-y-2 sm:w-32">
                     <Label>Quantity</Label>
                     <Input 
                       type="number"
@@ -340,7 +341,7 @@ export default function CreateEvent() {
                       type="button" 
                       variant="ghost" 
                       size="icon" 
-                      className="text-destructive hover:bg-destructive/10 mb-0.5"
+                      className="self-end text-destructive hover:bg-destructive/10 sm:mb-0.5"
                       onClick={() => removeTicket(index)}
                     >
                       <Trash2 className="w-5 h-5" />
@@ -354,11 +355,11 @@ export default function CreateEvent() {
             </Button>
           </div>
 
-          <div className="flex justify-end gap-4 pt-4">
-            <Button type="button" variant="ghost" onClick={() => setLocation("/")}>Cancel</Button>
+          <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:justify-end sm:gap-4">
+            <Button type="button" variant="ghost" className="w-full sm:w-auto" onClick={() => setLocation("/")}>Cancel</Button>
             <Button
               type="submit"
-              className="bg-primary hover:bg-primary/90 text-white min-w-[200px]"
+              className="w-full bg-primary hover:bg-primary/90 text-white sm:w-auto sm:min-w-[200px]"
               disabled={(isEditing ? updateEvent.isPending : createEvent.isPending) || !imageUrl}
             >
               {(isEditing ? updateEvent.isPending : createEvent.isPending) ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -367,6 +368,8 @@ export default function CreateEvent() {
           </div>
         </form>
       </main>
+
+      <Footer />
     </div>
   );
 }

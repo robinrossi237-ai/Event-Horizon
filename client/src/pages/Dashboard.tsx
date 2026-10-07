@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { useBookings } from "@/hooks/use-bookings";
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
@@ -48,9 +49,9 @@ export default function Dashboard() {
           <div className="flex items-center gap-2">
             {hasMultiple && (
               <>
-                <Button size="sm" variant="outline" onClick={prev} className="px-2">◀</Button>
+                <Button size="sm" variant="outline" onClick={prev} className="h-11 px-3 sm:h-8">◀</Button>
                 <div className="text-sm px-3 py-2 bg-muted rounded">{items[idx]?.ticket?.name || `Ticket ${idx+1}`} x{items[idx]?.quantity}</div>
-                <Button size="sm" variant="outline" onClick={next} className="px-2">▶</Button>
+                <Button size="sm" variant="outline" onClick={next} className="h-11 px-3 sm:h-8">▶</Button>
               </>
             )}
           </div>
@@ -101,18 +102,16 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       
-      <main className="container mx-auto px-4 py-10">
-        <div className="mb-10 flex items-center justify-between gap-4">
-          <h1 className="text-3xl font-display font-bold mb-2">My Dashboard</h1>
+      <main className="flex-1 container mx-auto px-4 py-10">
+        <div className="mb-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <h1 className="text-3xl font-display font-bold">My Dashboard</h1>
           <p className="text-muted-foreground">Welcome back, {user?.firstName}. Here are your upcoming events.</p>
-          <div>
-            <Link href="/catalogue">
-              <Button className="ml-4">Make Booking</Button>
-            </Link>
-          </div>
+          <Link href="/catalogue" className="block w-full sm:w-auto">
+            <Button className="w-full sm:w-auto">Make Booking</Button>
+          </Link>
         </div>
 
         {bookings?.length === 0 ? (
@@ -139,6 +138,8 @@ export default function Dashboard() {
           </div>
         )}
       </main>
+
+      <Footer />
     </div>
   );
 }

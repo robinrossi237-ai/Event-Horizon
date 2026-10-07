@@ -96,6 +96,21 @@ npm run start
 
 This expects compiled artifacts in `dist/` (see `script/build.ts`). Ensure `NODE_ENV=production` and production environment variables are set.
 
+## Deployment (Render + Neon)
+
+1. Free Postgres on Neon (neon.tech), copy the connection string into `DATABASE_URL`.
+2. Create the schema and seed the data, run against the *production* URL:
+
+```bash
+DATABASE_URL=<neon-url> npm run db:push
+DATABASE_URL=<neon-url> npm run seed:admin
+DATABASE_URL=<neon-url> npm run seed:events
+```
+
+3. Push this repo to GitHub, then on render.com: **New → Blueprint → Add from repo** (uses `render.yaml`).
+4. In the service EnvVars: set `DATABASE_URL` (Neon) and `UPLOAD_DIR=/data/uploads` (already in `render.yaml`). `SESSION_SECRET` is auto-generated.
+5. A 1 GB persistent disk is mounted at `/data` so user uploads survive redeploys. Seeded sample images are committed in `attached_assets/uploads` and served as a fallback.
+
 ## Common commands (from `package.json`)
 
 - `npm run dev` — start server in development (uses `tsx` to run TypeScript directly).
