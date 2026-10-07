@@ -86,9 +86,11 @@ export function registerObjectStorageRoutes(app: Express): void {
   app.get("/objects/:objectPath(*)", (req, res) => {
     try {
       const raw = req.params.objectPath as string; // e.g. uploads/filename
+      // Files are stored flat inside each store dir; drop the leading "uploads/" segment.
+      const relative = raw.startsWith("uploads/") || raw.startsWith("uploads\\") ? raw.slice("uploads/".length) : raw;
       // Serve from the persistent disk first, then the legacy committed dir (seed images).
       for (const dir of [uploadDir, legacyDir]) {
-        const filePath = path.join(dir, raw);
+        const filePath = path.join(dir, relative);
         if (!filePath.startsWith(dir + path.sep)) {
           // Prevent serving files outside allowed dirs
           return res.status(403).json({ error: "Forbidden" });
