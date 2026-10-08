@@ -12,8 +12,6 @@ services:
     startCommand: npm run start
     healthCheckPath: /
     envVars:
-      - key: NODE_ENV
-        value: production
       - key: PORT
         value: 10000
       - key: SESSION_SECRET
