@@ -5,7 +5,7 @@
 # uploads across redeploys, switch to a paid plan and add a disk mounted at /data.
 services:
   - type: web
-    name: event-horizon
+    name: ticketmaster
     runtime: node
     plan: free
     buildCommand: "npm install --include=dev && npm run build"
