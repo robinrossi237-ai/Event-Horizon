@@ -151,7 +151,7 @@ export default function CreateEvent() {
                 <Label htmlFor="title">Event Title</Label>
                 <Input 
                   id="title" 
-                  placeholder="e.g. Summer Music Festival 2024" 
+                  placeholder="e.g. Summer Music Festival 2026" 
                   value={formData.title}
                   onChange={e => setFormData({...formData, title: e.target.value})}
                   required
