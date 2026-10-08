@@ -1,5 +1,8 @@
 # Render Blueprint — Event-Horizon
 # Deploy: render.com > New > Blueprint > connect this repo.
+# Note: the free plan has no persistent disk, so uploads are ephemeral; seed
+# images live in the repo (attached_assets/uploads) and always work. To keep
+# uploads across redeploys, switch to a paid plan and add a disk mounted at /data.
 services:
   - type: web
     name: event-horizon
@@ -8,17 +11,11 @@ services:
     buildCommand: npm run build
     startCommand: npm run start
     healthCheckPath: /
-    disk:
-      name: uploads
-      mountPath: /data
-      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
-      - key: UPLOAD_DIR
-        value: /data/uploads
       - key: SESSION_SECRET
         generateValue: true
       - key: DATABASE_URL
